@@ -1,0 +1,358 @@
+EESchema Schematic File Version 2
+LIBS:power
+LIBS:device
+LIBS:transistors
+LIBS:conn
+LIBS:linear
+LIBS:regul
+LIBS:74xx
+LIBS:cmos4000
+LIBS:adc-dac
+LIBS:memory
+LIBS:xilinx
+LIBS:microcontrollers
+LIBS:dsp
+LIBS:microchip
+LIBS:analog_switches
+LIBS:motorola
+LIBS:texas
+LIBS:intel
+LIBS:audio
+LIBS:interface
+LIBS:digital-audio
+LIBS:philips
+LIBS:display
+LIBS:cypress
+LIBS:siliconi
+LIBS:opto
+LIBS:atmel
+LIBS:contrib
+LIBS:valves
+LIBS:schematic-cache
+EELAYER 25 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 1 1
+Title ""
+Date ""
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L ATTINY2313-P IC1
+U 1 1 5905F736
+P 3700 3650
+F 0 "IC1" H 2750 4650 50  0000 C CNN
+F 1 "ATTINY2313-P" H 4500 2750 50  0000 C CNN
+F 2 "Housings_DIP:DIP-20_W7.62mm_Socket" H 3700 3650 50  0000 C CIN
+F 3 "" H 3700 3650 50  0000 C CNN
+	1    3700 3650
+	1    0    0    -1  
+$EndComp
+$Comp
+L SW_PUSH SW1
+U 1 1 590621FB
+P 5850 6750
+F 0 "SW1" H 6000 6860 50  0000 C CNN
+F 1 "Off" H 5850 6670 50  0000 C CNN
+F 2 "Socket_Strips:Socket_Strip_Straight_1x02_Pitch2.54mm" H 5850 6750 50  0001 C CNN
+F 3 "" H 5850 6750 50  0000 C CNN
+	1    5850 6750
+	0    -1   -1   0   
+$EndComp
+$Comp
+L SW_PUSH SW3
+U 1 1 59062268
+P 6550 6750
+F 0 "SW3" H 6700 6860 50  0000 C CNN
+F 1 "Siren" H 6550 6670 50  0000 C CNN
+F 2 "Socket_Strips:Socket_Strip_Straight_1x02_Pitch2.54mm" H 6550 6750 50  0001 C CNN
+F 3 "" H 6550 6750 50  0000 C CNN
+	1    6550 6750
+	0    -1   -1   0   
+$EndComp
+$Comp
+L SW_PUSH SW2
+U 1 1 590622F9
+P 6200 6750
+F 0 "SW2" H 6350 6860 50  0000 C CNN
+F 1 "Up" H 6200 6670 50  0000 C CNN
+F 2 "Socket_Strips:Socket_Strip_Straight_1x02_Pitch2.54mm" H 6200 6750 50  0001 C CNN
+F 3 "" H 6200 6750 50  0000 C CNN
+	1    6200 6750
+	0    -1   -1   0   
+$EndComp
+$Comp
+L D_Small D2
+U 1 1 590626D5
+P 5350 6050
+F 0 "D2" H 5300 6130 50  0000 L CNN
+F 1 "D" H 5200 5970 50  0001 L CNN
+F 2 "Diodes_SMD:D_0805" V 5350 6050 50  0001 C CNN
+F 3 "" V 5350 6050 50  0000 C CNN
+	1    5350 6050
+	-1   0    0    1   
+$EndComp
+$Comp
+L D_Small D3
+U 1 1 59062780
+P 5350 6300
+F 0 "D3" V 5300 6380 50  0000 L CNN
+F 1 "D" H 5200 6220 50  0001 L CNN
+F 2 "Diodes_SMD:D_0805" V 5350 6300 50  0001 C CNN
+F 3 "" V 5350 6300 50  0000 C CNN
+	1    5350 6300
+	-1   0    0    1   
+$EndComp
+$Comp
+L D_Small D1
+U 1 1 590627B8
+P 5350 5750
+F 0 "D1" H 5300 5830 50  0000 L CNN
+F 1 "D" H 5200 5670 50  0001 L CNN
+F 2 "Diodes_SMD:D_0805" V 5350 5750 50  0001 C CNN
+F 3 "" V 5350 5750 50  0000 C CNN
+	1    5350 5750
+	-1   0    0    1   
+$EndComp
+$Comp
+L R R1
+U 1 1 59062AD3
+P 2800 4650
+F 0 "R1" V 2880 4650 50  0000 C CNN
+F 1 "10K" V 2800 4650 50  0000 C CNN
+F 2 "Resistors_SMD:R_0805_HandSoldering" V 2730 4650 50  0001 C CNN
+F 3 "" H 2800 4650 50  0000 C CNN
+	1    2800 4650
+	0    1    1    0   
+$EndComp
+$Comp
+L C_Small C1
+U 1 1 59062BB4
+P 2800 4900
+F 0 "C1" H 2810 4970 50  0000 L CNN
+F 1 "4u7" H 2810 4820 50  0000 L CNN
+F 2 "Capacitors_SMD:C_0805_HandSoldering" H 2800 4900 50  0001 C CNN
+F 3 "" H 2800 4900 50  0000 C CNN
+	1    2800 4900
+	0    1    1    0   
+$EndComp
+$Comp
+L R R2
+U 1 1 59063078
+P 5850 5450
+F 0 "R2" V 5930 5450 50  0000 C CNN
+F 1 "1K" V 5850 5450 50  0000 C CNN
+F 2 "Resistors_SMD:R_0805_HandSoldering" V 5780 5450 50  0001 C CNN
+F 3 "" H 5850 5450 50  0000 C CNN
+	1    5850 5450
+	1    0    0    -1  
+$EndComp
+$Comp
+L R R3
+U 1 1 590630E0
+P 6200 5450
+F 0 "R3" V 6280 5450 50  0000 C CNN
+F 1 "1K" V 6200 5450 50  0000 C CNN
+F 2 "Resistors_SMD:R_0805_HandSoldering" V 6130 5450 50  0001 C CNN
+F 3 "" H 6200 5450 50  0000 C CNN
+	1    6200 5450
+	1    0    0    -1  
+$EndComp
+$Comp
+L R R4
+U 1 1 5906312D
+P 6550 5450
+F 0 "R4" V 6630 5450 50  0000 C CNN
+F 1 "1K" V 6550 5450 50  0000 C CNN
+F 2 "Resistors_SMD:R_0805_HandSoldering" V 6480 5450 50  0001 C CNN
+F 3 "" H 6550 5450 50  0000 C CNN
+	1    6550 5450
+	1    0    0    -1  
+$EndComp
+$Comp
+L CONN_01X03 P1
+U 1 1 59062C3F
+P 5300 3850
+F 0 "P1" H 5300 4050 50  0000 C CNN
+F 1 "Tx" V 5400 3850 50  0000 C CNN
+F 2 "Socket_Strips:Socket_Strip_Straight_1x03_Pitch2.54mm" H 5300 3850 50  0001 C CNN
+F 3 "" H 5300 3850 50  0000 C CNN
+	1    5300 3850
+	1    0    0    -1  
+$EndComp
+$Comp
+L Battery BT1
+U 1 1 5906E8AC
+P 1950 6850
+F 0 "BT1" H 2050 6900 50  0000 L CNN
+F 1 "Battery 6V" H 2050 6800 50  0000 L CNN
+F 2 "battery:6V_battery_4LR44" V 1950 6890 50  0001 C CNN
+F 3 "" V 1950 6890 50  0000 C CNN
+	1    1950 6850
+	1    0    0    -1  
+$EndComp
+$Comp
+L R R6
+U 1 1 5907656E
+P 2250 2850
+F 0 "R6" V 2330 2850 50  0000 C CNN
+F 1 "10K" V 2250 2850 50  0000 C CNN
+F 2 "Resistors_SMD:R_0805_HandSoldering" V 2180 2850 50  0001 C CNN
+F 3 "" H 2250 2850 50  0000 C CNN
+	1    2250 2850
+	0    1    1    0   
+$EndComp
+$Comp
+L CONN_01X06 P2
+U 1 1 59076E9E
+P 2600 1350
+F 0 "P2" H 2600 1700 50  0000 C CNN
+F 1 "Program" V 2700 1350 50  0000 C CNN
+F 2 "Socket_Strips:Socket_Strip_Straight_1x06_Pitch2.54mm" H 2600 1350 50  0001 C CNN
+F 3 "" H 2600 1350 50  0000 C CNN
+	1    2600 1350
+	0    -1   -1   0   
+$EndComp
+$Comp
+L GNDREF #PWR01
+U 1 1 590625D5
+P 6200 7250
+F 0 "#PWR01" H 6200 7000 50  0001 C CNN
+F 1 "GNDREF" H 6200 7100 50  0000 C CNN
+F 2 "" H 6200 7250 50  0000 C CNN
+F 3 "" H 6200 7250 50  0000 C CNN
+	1    6200 7250
+	1    0    0    -1  
+$EndComp
+Connection ~ 3700 6050
+Wire Wire Line
+	1600 1550 1600 6050
+Wire Wire Line
+	1950 7000 1950 7150
+Connection ~ 3050 4900
+Wire Wire Line
+	3050 4650 3050 4900
+Wire Wire Line
+	2950 4650 3050 4650
+Connection ~ 1950 4650
+Wire Wire Line
+	2650 4650 1950 4650
+Connection ~ 1950 4900
+Wire Wire Line
+	2700 4900 1950 4900
+Wire Wire Line
+	3700 2300 1950 2300
+Connection ~ 1950 2850
+Wire Wire Line
+	2100 2850 1950 2850
+Wire Wire Line
+	2550 2850 2400 2850
+Connection ~ 5850 7150
+Wire Wire Line
+	1950 2300 1950 6700
+Wire Wire Line
+	1950 7150 6550 7150
+Connection ~ 3700 4900
+Wire Wire Line
+	3700 2300 3700 2550
+Wire Wire Line
+	6200 3150 6200 5300
+Wire Wire Line
+	5850 3250 5850 5300
+Connection ~ 6550 6300
+Connection ~ 6200 6050
+Connection ~ 5850 5750
+Wire Wire Line
+	3700 6050 3700 4650
+Wire Wire Line
+	5850 5600 5850 6450
+Wire Wire Line
+	6200 5600 6200 6450
+Wire Wire Line
+	6550 5600 6550 6450
+Connection ~ 6200 7150
+Wire Wire Line
+	6200 7050 6200 7250
+Wire Wire Line
+	5850 7050 5850 7150
+Wire Wire Line
+	1600 6050 5250 6050
+Wire Wire Line
+	5450 6300 6550 6300
+Wire Wire Line
+	5450 6050 6200 6050
+Wire Wire Line
+	5450 5750 5850 5750
+Connection ~ 5250 6050
+Wire Wire Line
+	5250 5750 5250 6300
+Wire Wire Line
+	2450 2850 2450 1550
+Connection ~ 2450 2850
+Wire Wire Line
+	2350 1550 1600 1550
+Wire Wire Line
+	2550 1550 2550 2300
+Connection ~ 2550 2300
+Wire Wire Line
+	2650 1550 2650 2200
+Wire Wire Line
+	2650 2200 4950 2200
+Wire Wire Line
+	4950 2200 4950 3550
+Wire Wire Line
+	2750 1550 2750 2100
+Wire Wire Line
+	2750 2100 5050 2100
+Wire Wire Line
+	5050 2100 5050 3450
+Wire Wire Line
+	2850 1550 2850 2000
+Wire Wire Line
+	2850 2000 5150 2000
+Wire Wire Line
+	5150 2000 5150 3350
+Wire Wire Line
+	4950 3550 4850 3550
+Wire Wire Line
+	5050 3450 4850 3450
+Wire Wire Line
+	5150 3350 4850 3350
+Wire Wire Line
+	4850 3250 5850 3250
+Wire Wire Line
+	4850 3150 6200 3150
+Wire Wire Line
+	6550 5300 6550 2950
+Wire Wire Line
+	6550 2950 4850 2950
+NoConn ~ 2550 3150
+NoConn ~ 2550 3350
+NoConn ~ 4850 3950
+NoConn ~ 4850 4050
+NoConn ~ 4850 4150
+NoConn ~ 4850 4250
+NoConn ~ 4850 4350
+NoConn ~ 4850 3050
+NoConn ~ 4850 2850
+Wire Wire Line
+	6550 7150 6550 7050
+Wire Wire Line
+	4850 3750 5100 3750
+Wire Wire Line
+	4850 3850 5100 3850
+Wire Wire Line
+	5100 4900 5100 3950
+Wire Wire Line
+	2900 4900 5100 4900
+Text Label 4950 3750 0    60   ~ 0
+Data
+Text Label 4950 3850 0    60   ~ 0
+Vcc
+$EndSCHEMATC
