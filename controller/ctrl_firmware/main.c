@@ -39,31 +39,40 @@ void HwInit( void )
  * and then nothing else until re-started */
 int main( void )
 {
+	uint8_t i;
+
 	HwInit();
 
 	TX_ON();
 	_delay_ms(10);
-	TX_DATA_ON();
-	_delay_ms(7);
-	TX_DATA_OFF();
-	_delay_ms(7);
-	TX_DATA_ON();
-	_delay_ms(7);
-	TX_DATA_OFF();
-	_delay_ms(7);
-	TX_DATA_ON();
 
 	uint8_t cmd = READ_CMD();
 
 	if(((cmd >> SW_OFF_PIN) & 1) == 0){
 		/* Off key pressed */
-		_delay_ms(50);
+		for(i = 0; i < 10; i++){
+			TX_DATA_ON();
+			_delay_ms(10);
+			TX_DATA_OFF();
+			_delay_ms(10);
+		}
+
 	}else if(((cmd >> SW_SIREN_PIN) & 1) == 0){
 		/* Siren key pressed */
-		_delay_ms(70);
+		for(i = 0; i < 10; i++){
+			TX_DATA_ON();
+			_delay_ms(15);
+			TX_DATA_OFF();
+			_delay_ms(15);
+		}
 	}else if(((cmd >> SW_UP_PIN) & 1) == 0){
 		/* Up key pressed */
-		_delay_ms(90);
+		for(i = 0; i < 10; i++){
+			TX_DATA_ON();
+			_delay_ms(20);
+			TX_DATA_OFF();
+			_delay_ms(20);
+		}
 	}
 
 	TX_DATA_OFF();

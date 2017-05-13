@@ -23,10 +23,10 @@
 #define MOTOR_PIN			(PB2)	// output
 
 #define LIGHT_PWM			(100u)	// number of 8 bit counter where the light goes on
-#define CMD_0				(56u)	// minimum command length in ms (the first one)
-#define CMD_1				(77u)	// second command length in ms
-#define CMD_2				(98u)	// third command length in ms
-#define CMD_TOLERANCE		(6u)	// command length tolerance
+#define CMD_0				(10u)	// minimum command length in ms (the first one)
+#define CMD_1				(15u)	// second command length in ms
+#define CMD_2				(20u)	// third command length in ms
+#define CMD_TOLERANCE		(2u)	// command length tolerance
 #define WEIGHT_THREASHOLD_MULTIPLIER	(25)
 
 //#define DEBUG_WEIGHT
@@ -56,6 +56,8 @@
 #define set_target_speed()	do{ target_speed = pwm[speed_idx]; }while(0)
 #define speed_up()			do{ if(speed_idx < max_speed_idx){ speed_idx++; } set_target_speed(); }while(0)
 #define max_speed_idx  		(6u)	/* pwm[] max index */
+#define rxBufSize			(16)
+#define rxBufMask			(rxBufSize - 1)
 
 /*--------- Forward declarations ---------------*/
 void update_speed(void);
@@ -70,8 +72,15 @@ uint8_t target_speed = 0;
 volatile uint8_t current_speed = 0;
 volatile uint16_t speed_count = 0;
 volatile uint8_t light_count = 0;
-volatile uint16_t comm_counter = 0;
-volatile uint8_t cmd = 0;
+volatile uint8_t comm_on_counter = 0;
+volatile uint8_t comm_off_counter = 0;
+volatile uint8_t rxBuf[16];
+volatile uint8_t rxRdIdx = 0;
+volatile uint8_t rxWrIdx = 0;
+
+#define isRxEmpty()	(rxWrIdx == rxRdIdx)
+#define isRxFull()	(((rxWrIdx - rxRdIdx) & rxBufMask) > (rxBufSize - 2))
+#define rxHasData()	(((rxWrIdx - rxRdIdx) & rxBufMask) > 0)
 
 /* Timer1 ISR. Triggers at 1ms */
 ISR(TIMER1_COMPA_vect){
@@ -79,6 +88,7 @@ ISR(TIMER1_COMPA_vect){
 //	update_speed();
 //	update_light();
 }
+
 
 void update_light(void){
 	if(light_flag){
@@ -113,32 +123,35 @@ void update_speed(void){
 }
 
 void update_comms(void){
-
 	if(data_read()){
-		comm_counter++;
+		if(comm_off_counter != 0){
+			if(!isRxFull()){
+				rxBuf[(rxWrIdx & rxBufMask)] = comm_off_counter;
+				rxWrIdx++;
+			}
+			comm_off_counter = 0;
+		}
+		comm_on_counter++;
 	}else{
-		if(cmd == 0){
-			/* Last command has been processed  */
-
-			if((comm_counter > (CMD_0 - CMD_TOLERANCE)) && (comm_counter < (CMD_0 + CMD_TOLERANCE))){
-				cmd = CMD_0;
-			}else if((comm_counter > (CMD_1 - CMD_TOLERANCE)) && (comm_counter < (CMD_1 + CMD_TOLERANCE))){
-				cmd = CMD_1;
-			}else if((comm_counter > (CMD_2 - CMD_TOLERANCE)) && (comm_counter < (CMD_2 + CMD_TOLERANCE))){
-				cmd = CMD_2;
+		if(comm_on_counter != 0){
+			if(!isRxFull()){
+				rxBuf[(rxWrIdx & rxBufMask)] = comm_on_counter;
+				rxWrIdx++;
 			}
-
-#ifdef DEBUG_COMMAND
-			if((comm_counter > (CMD_0 - CMD_TOLERANCE)) && (comm_counter < (CMD_2 + CMD_TOLERANCE))){
-				UART_send(0);
-				UART_send((uint8_t)comm_counter);
-			}
-#endif
-
-		} //else command goes to dust
-
-		comm_counter = 0;
+			comm_on_counter = 0;
+		}
+		comm_off_counter++;
 	}
+}
+
+bool getRx( uint8_t* data ){
+
+	if(rxHasData()){
+		*data = rxBuf[(rxRdIdx & rxBufMask)];
+		return true;
+	}
+
+	return false;
 }
 
 /* Initializes the hardware */
@@ -170,9 +183,7 @@ void HwInit( void )
 	TCCR1B = (1 << WGM12) | (1 << CS10);	// CTC mode, clk src = clk/1, start timer
 	TIMSK |= (1 << OCIE1A);					// enable compare interrupt
 
-#if defined(DEBUG_WEIGHT) || defined(DEBUG_COMMAND)
 	UART_init();
-#endif
 
 	sei();
 }
@@ -284,6 +295,7 @@ void weight_measure(void){
 int main( void )
 {
 	uint8_t speed_idx = 0;
+	uint8_t data;
 
 	HwInit();
 
@@ -297,50 +309,16 @@ int main( void )
 
 	LED_on();
 	_delay_ms(300);
-
+	LED_off();
 
 	for(;;){	// Infinite main loop
 		wdt_reset();
-		LED_off();
 
+		if(getRx(&data)){
 
-		/* Check command */
-		switch(cmd){
-			case CMD_0:
-			{
-				LED_on();
-				_delay_ms(300);
-				break;
-			}
-			case CMD_1:
-			{
-				LED_on();
-				_delay_ms(300);
-				LED_off();
-				_delay_ms(300);
-				LED_on();
-				_delay_ms(300);
-				break;
-			}
-			case CMD_2:
-			{
-				LED_on();
-				_delay_ms(300);
-				LED_off();
-				_delay_ms(300);
-				LED_on();
-				_delay_ms(300);
-				LED_off();
-				_delay_ms(300);
-				LED_on();
-				_delay_ms(300);
-				break;
-			}
-			default:
-				break;
 		}
 
-		cmd = 0;
+
 	}
 
 
