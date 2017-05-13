@@ -14,7 +14,7 @@
 #include <avr/wdt.h>
 #include "attiny_uart_dbg.h"
 
-/* Configuration */
+/*--------- Configuration ----------------------*/
 #define WEIGHT_PIN			(PA1)	// input
 #define REFERENCE_PIN		(PA0)	// input
 #define RX_DATA_PIN			(PD0)	// input
@@ -23,12 +23,15 @@
 #define MOTOR_PIN			(PB2)	// output
 
 #define LIGHT_PWM			(100u)	// number of 8 bit counter where the light goes on
-#define CMD_0				(10u)	// minimum command length in ms
-#define CMD_1				(30u)
-#define CMD_2				(40u)
-#define CMD_MAX				(60u)	// maximum command length in ms
+#define CMD_0				(56u)	// minimum command length in ms (the first one)
+#define CMD_1				(77u)	// second command length in ms
+#define CMD_2				(98u)	// third command length in ms
+#define CMD_TOLERANCE		(6u)	// command length tolerance
 #define WEIGHT_THREASHOLD_MULTIPLIER	(25)
-/* End of configuration */
+
+//#define DEBUG_WEIGHT
+//#define DEBUG_COMMAND
+/*---------- End of configuration --------------*/
 
 #define WEIGHT_MASK			(1 << WEIGHT_PIN)
 #define REFERENCE_MASK		(1 << REFERENCE_PIN)
@@ -54,15 +57,28 @@
 #define speed_up()			do{ if(speed_idx < max_speed_idx){ speed_idx++; } set_target_speed(); }while(0)
 #define max_speed_idx  		(6u)	/* pwm[] max index */
 
+/*--------- Forward declarations ---------------*/
+void update_speed(void);
+void update_light(void);
+void update_comms(void);
 
+
+/*--------- Global variables ---------------*/
 const uint8_t pwm[] = { 0, 105, 135, 165, 195, 225, 255 };
 bool light_flag = false;
 uint8_t target_speed = 0;
 volatile uint8_t current_speed = 0;
 volatile uint16_t speed_count = 0;
 volatile uint8_t light_count = 0;
-volatile uint8_t comm_counter = 0;
-volatile uint8_t cmd_len = 0;
+volatile uint16_t comm_counter = 0;
+volatile uint8_t cmd = 0;
+
+/* Timer1 ISR. Triggers at 1ms */
+ISR(TIMER1_COMPA_vect){
+	update_comms();
+//	update_speed();
+//	update_light();
+}
 
 void update_light(void){
 	if(light_flag){
@@ -101,22 +117,28 @@ void update_comms(void){
 	if(data_read()){
 		comm_counter++;
 	}else{
-		if(cmd_len == 0){
+		if(cmd == 0){
 			/* Last command has been processed  */
-			if((comm_counter > CMD_0) && (comm_counter < CMD_MAX)){
-				cmd_len = comm_counter;
+
+			if((comm_counter > (CMD_0 - CMD_TOLERANCE)) && (comm_counter < (CMD_0 + CMD_TOLERANCE))){
+				cmd = CMD_0;
+			}else if((comm_counter > (CMD_1 - CMD_TOLERANCE)) && (comm_counter < (CMD_1 + CMD_TOLERANCE))){
+				cmd = CMD_1;
+			}else if((comm_counter > (CMD_2 - CMD_TOLERANCE)) && (comm_counter < (CMD_2 + CMD_TOLERANCE))){
+				cmd = CMD_2;
 			}
+
+#ifdef DEBUG_COMMAND
+			if((comm_counter > (CMD_0 - CMD_TOLERANCE)) && (comm_counter < (CMD_2 + CMD_TOLERANCE))){
+				UART_send(0);
+				UART_send((uint8_t)comm_counter);
+			}
+#endif
+
 		} //else command goes to dust
 
 		comm_counter = 0;
 	}
-}
-
-/* Timer1 ISR. Triggers at 1ms */
-ISR(TIMER1_COMPA_vect){
-	update_comms();
-	update_speed();
-	update_light();
 }
 
 /* Initializes the hardware */
@@ -126,7 +148,7 @@ void HwInit( void )
 	wdt_reset();
 	//Start watchdog timer with 4s prescaller
 	WDTCSR = (1<<WDIE)|(1<<WDE)|(1<<WDP3);
-	wdt_enable(WDTO_2S);
+	wdt_enable(WDTO_4S);
 
 	DDRD = SIREN_MASK;						// set direction on PORTD
 	PORTD = ~(SIREN_MASK | RX_DATA_MASK);	// set pull up resistors for unused pins
@@ -147,6 +169,10 @@ void HwInit( void )
 	TCCR1A = 0;             				// CTC mode
 	TCCR1B = (1 << WGM12) | (1 << CS10);	// CTC mode, clk src = clk/1, start timer
 	TIMSK |= (1 << OCIE1A);					// enable compare interrupt
+
+#if defined(DEBUG_WEIGHT) || defined(DEBUG_COMMAND)
+	UART_init();
+#endif
 
 	sei();
 }
@@ -205,8 +231,8 @@ bool weight_detect(void){
 	return false;
 }
 
-//#define DEBUG
-#ifdef DEBUG
+
+#ifdef DEBUG_WEIGHT
 /* Just for measuring. Remove later.
  * Sends measured charge time of reference capacity after 0xAA,
  * measured sensor capacity after 0xBB,
@@ -261,46 +287,91 @@ int main( void )
 
 	HwInit();
 
-	UART_init();
 
-#ifdef DEBUG
+#ifdef DEBUG_WEIGHT
 	for(;;){
 		weight_measure();
 		_delay_ms(400);
 	}
 #endif
 
+	LED_on();
+	_delay_ms(300);
+
+
 	for(;;){	// Infinite main loop
 		wdt_reset();
+		LED_off();
 
-		if(weight_detect()){
 
-			light_on();
-
-			/* Check command */
-			if(cmd_len > CMD_MAX){
-				/* No command */
-
-			}else if(cmd_len > CMD_2){
-				/* third command */
-				speed_up();
-			}else if(cmd_len > CMD_1){
-				/* Second command */
-				cmd_len = 0;		// Siren might take longer, so do not block execution
-				siren();
-			}else if(cmd_len > CMD_0){
-				/* first command */
-				stop();
+		/* Check command */
+		switch(cmd){
+			case CMD_0:
+			{
+				LED_on();
+				_delay_ms(300);
+				break;
 			}
-
-		}else{
-			light_off();
-			stop();
+			case CMD_1:
+			{
+				LED_on();
+				_delay_ms(300);
+				LED_off();
+				_delay_ms(300);
+				LED_on();
+				_delay_ms(300);
+				break;
+			}
+			case CMD_2:
+			{
+				LED_on();
+				_delay_ms(300);
+				LED_off();
+				_delay_ms(300);
+				LED_on();
+				_delay_ms(300);
+				LED_off();
+				_delay_ms(300);
+				LED_on();
+				_delay_ms(300);
+				break;
+			}
+			default:
+				break;
 		}
 
-		cmd_len = 0;
-
+		cmd = 0;
 	}
+
+
+
+
+//	for(;;){	// Infinite main loop
+//		wdt_reset();
+//
+//		if(weight_detect()){
+//
+//			light_on();
+//
+//			/* Check command */
+//			if((cmd_len > (CMD_0 - CMD_TOLERANCE)) && (cmd_len < (CMD_0 + CMD_TOLERANCE))){
+//				/* first command */
+//				stop();
+//			}else if((cmd_len > (CMD_1 - CMD_TOLERANCE)) && (cmd_len < (CMD_1 + CMD_TOLERANCE))){
+//				/* Second command */
+//				cmd_len = 0;		// Siren might take longer, so do not block execution
+//				siren();
+//			}else if((cmd_len > (CMD_2 - CMD_TOLERANCE)) && (cmd_len < (CMD_2 + CMD_TOLERANCE))){
+//				/* third command */
+//				speed_up();
+//			}
+//		}else{
+//			light_off();
+//			stop();
+//		}
+//
+//		cmd_len = 0;
+//	}
 
 	return 0;
 }

@@ -44,21 +44,30 @@ int main( void )
 	TX_ON();
 	_delay_ms(10);
 	TX_DATA_ON();
+	_delay_ms(7);
+	TX_DATA_OFF();
+	_delay_ms(7);
+	TX_DATA_ON();
+	_delay_ms(7);
+	TX_DATA_OFF();
+	_delay_ms(7);
+	TX_DATA_ON();
 
 	uint8_t cmd = READ_CMD();
 
 	if(((cmd >> SW_OFF_PIN) & 1) == 0){
 		/* Off key pressed */
-		_delay_ms(20);
+		_delay_ms(50);
 	}else if(((cmd >> SW_SIREN_PIN) & 1) == 0){
 		/* Siren key pressed */
-		_delay_ms(35);
+		_delay_ms(70);
 	}else if(((cmd >> SW_UP_PIN) & 1) == 0){
 		/* Up key pressed */
-		_delay_ms(50);
+		_delay_ms(90);
 	}
 
 	TX_DATA_OFF();
+	_delay_ms(10);
 	TX_OFF();
 
 	while(1);	/* wait forever */
