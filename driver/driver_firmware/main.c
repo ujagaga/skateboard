@@ -13,6 +13,7 @@
 #include <avr/eeprom.h>
 #include <avr/wdt.h>
 #include "attiny_uart_dbg.h"
+#include "stdlib.h"
 
 /*--------- Configuration ----------------------*/
 #define WEIGHT_PIN			(PA1)	// input
@@ -52,8 +53,7 @@
 #define stop()				do{ speed_idx = 0; set_target_speed(); }while(0)
 #define light_on()			do{ light_flag = true; }while(0)
 #define light_off()			do{ light_flag = false; }while(0)
-#define set_speed(x)		do{ OCR0A = (x); }while(0)
-#define set_target_speed()	do{ target_speed = pwm[speed_idx]; }while(0)
+#define set_target_speed()	do{ target_speed = pwm[speed_idx];}while(0)
 #define speed_up()			do{ if(speed_idx < max_speed_idx){ speed_idx++; } set_target_speed(); }while(0)
 #define max_speed_idx  		(6u)	/* pwm[] max index */
 #define rxBufSize			(16)
@@ -81,12 +81,13 @@ volatile uint8_t rxWrIdx = 0;
 #define isRxEmpty()	(rxWrIdx == rxRdIdx)
 #define isRxFull()	(((rxWrIdx - rxRdIdx) & rxBufMask) > (rxBufSize - 2))
 #define rxHasData()	(((rxWrIdx - rxRdIdx) & rxBufMask) > 0)
+#define purgeRxBuff()	do{ rxWrIdx=rxRdIdx;}while(0)
 
 /* Timer1 ISR. Triggers at 1ms */
 ISR(TIMER1_COMPA_vect){
 	update_comms();
-//	update_speed();
-//	update_light();
+	update_speed();
+	update_light();
 }
 
 
@@ -107,18 +108,19 @@ void update_light(void){
 void update_speed(void){
 	speed_count++;
 
-	if(speed_count == 50){
+	if(speed_count == 100){
 		/* 0.1s*/
 		speed_count = 0;
 
 		if(current_speed < target_speed){
-			current_speed += 1;
+			current_speed++;
 		}else{
 			current_speed = target_speed;
 		}
 
 		uint8_t result = ~current_speed;	// due to inverted PWM output
-		set_speed(result);
+		/* set_speed */
+		OCR0A = result;
 	}
 }
 
@@ -142,16 +144,6 @@ void update_comms(void){
 		}
 		comm_off_counter++;
 	}
-}
-
-bool getRx( uint8_t* data ){
-
-	if(rxHasData()){
-		*data = rxBuf[(rxRdIdx & rxBufMask)];
-		return true;
-	}
-
-	return false;
 }
 
 /* Initializes the hardware */
@@ -183,7 +175,7 @@ void HwInit( void )
 	TCCR1B = (1 << WGM12) | (1 << CS10);	// CTC mode, clk src = clk/1, start timer
 	TIMSK |= (1 << OCIE1A);					// enable compare interrupt
 
-	UART_init();
+//	UART_init();
 
 	sei();
 }
@@ -193,8 +185,10 @@ void HwInit( void )
 void siren(void){
 	uint8_t i, j;
 
+	UART_send(0x01);
+
 	for(i=0; i<10; i++){
-		for(j=0; j<10; i++){
+		for(j=0; j<10; j++){
 			siren_on();
 			_delay_ms(1);
 			siren_off();
@@ -202,6 +196,7 @@ void siren(void){
 		}
 		_delay_ms(20);
 	}
+	UART_send(0x02);
 }
 
 /* Detects if there is a driver on the scateboard */
@@ -295,7 +290,9 @@ void weight_measure(void){
 int main( void )
 {
 	uint8_t speed_idx = 0;
-	uint8_t data;
+	uint8_t data = 0;
+	uint8_t saved_data = 0;
+	uint8_t same_data_count = 0;
 
 	HwInit();
 
@@ -314,42 +311,38 @@ int main( void )
 	for(;;){	// Infinite main loop
 		wdt_reset();
 
-		if(getRx(&data)){
-
+		while(!rxHasData()){
+			wdt_reset();
 		}
 
+		data = rxBuf[(rxRdIdx & rxBufMask)];
+		rxRdIdx++;
 
+		if(abs(data - saved_data) < 3){
+			/* Similar data received again */
+			same_data_count++;
+		}else{
+			same_data_count = 0;
+			saved_data = data;
+		}
+
+		if(same_data_count > 6){
+			/* received 3 pulses and 3 pauses of same width */
+			if((saved_data > (CMD_0 - CMD_TOLERANCE)) && (saved_data < (CMD_0 + CMD_TOLERANCE))){
+				stop();
+			}else if((saved_data > (CMD_1 - CMD_TOLERANCE)) && (saved_data < (CMD_1 + CMD_TOLERANCE))){
+				siren();
+			}else if((saved_data > (CMD_2 - CMD_TOLERANCE)) && (saved_data < (CMD_2 + CMD_TOLERANCE))){
+				speed_up();
+			}
+
+			_delay_ms(100);
+
+			purgeRxBuff();
+			same_data_count = 0;
+			saved_data = 0;
+		}
 	}
-
-
-
-
-//	for(;;){	// Infinite main loop
-//		wdt_reset();
-//
-//		if(weight_detect()){
-//
-//			light_on();
-//
-//			/* Check command */
-//			if((cmd_len > (CMD_0 - CMD_TOLERANCE)) && (cmd_len < (CMD_0 + CMD_TOLERANCE))){
-//				/* first command */
-//				stop();
-//			}else if((cmd_len > (CMD_1 - CMD_TOLERANCE)) && (cmd_len < (CMD_1 + CMD_TOLERANCE))){
-//				/* Second command */
-//				cmd_len = 0;		// Siren might take longer, so do not block execution
-//				siren();
-//			}else if((cmd_len > (CMD_2 - CMD_TOLERANCE)) && (cmd_len < (CMD_2 + CMD_TOLERANCE))){
-//				/* third command */
-//				speed_up();
-//			}
-//		}else{
-//			light_off();
-//			stop();
-//		}
-//
-//		cmd_len = 0;
-//	}
 
 	return 0;
 }
