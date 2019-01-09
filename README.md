@@ -1,9 +1,14 @@
 # skateboard
 
-This is how I made my electric skateboard.
-Here is the schematic, PCB and firmware for AtTiny2313 for both remote controller and motor driver.
-The motor is from an automobile fan that I bought at a junk yard.
-The batteries are two 6V/3,4Ah LED batteries. 
+In progress.
 
 More details, after it is finished, will be on my website:
 www.radinaradionica.com
+
+
+Some references:
+
+https://techtutorialsx.com/2016/12/11/esp8266-external-interrupts/
+https://circuits4you.com/2017/12/08/esp8266-external-interrupt-example/
+
+https://www.losant.com/blog/making-the-esp8266-low-powered-with-deep-sleep
