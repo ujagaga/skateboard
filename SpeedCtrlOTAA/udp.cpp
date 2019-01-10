@@ -28,7 +28,7 @@ void UDP_process(){
     if(String(incomingPacket).equals(ping_msg)){
       //Serial.println("Ping received");
       // send back a reply, to the IP address and port we got the packet from
-      delay(random(13));
+     
       Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
       Udp.write(UdpRreply);
       Udp.endPacket(); 
