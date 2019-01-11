@@ -1,7 +1,6 @@
 #include <WiFiUdp.h>
 #include <ESP8266WiFi.h>
-#include "config.h"
-#include "SkateCtrl_OTAA"
+#include "SkateCtrl_OTAA.h"
 
 
 static WiFiUDP Udp;
@@ -13,8 +12,6 @@ void UDP_init(){
   Udp.begin(UDP_PORT);
   Serial.printf("Listenning UDP on port %d\n\r", UDP_PORT);
   String UdpRreplyStr = WiFi.macAddress();
-  UdpRreplyStr += ":";
-  UdpRreplyStr += DEV_ID;
   UdpRreplyStr += "\n";
   UdpRreplyStr.toCharArray(UdpRreply, UdpRreplyStr.length() + 1);
 }

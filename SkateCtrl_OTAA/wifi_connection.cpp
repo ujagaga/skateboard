@@ -1,13 +1,13 @@
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <DNSServer.h>
-#include "config.h"
+#include "SkateCtrl_OTAA.h"
 
 
 char myApName[64] = {0};    /* Array to form AP name based on read MAC */
 static const char myApPass[] PROGMEM = "myApPass123";
 IPAddress apIP(192, 168, 1, 1);
-DNSServer dnsServer;
+
 
 /* Initiates a local AP */
 void configAP(void){ 
@@ -26,9 +26,6 @@ void configAP(void){
   Serial.println(wifi_statusMessage); 
 }
 
-void WIFIC_process(void){ 
-  dnsServer.processNextRequest();
-}
 
 void WIFIC_init(void){   
   String ApName = AP_NAME_PREFIX + WiFi.macAddress();
@@ -36,9 +33,6 @@ void WIFIC_init(void){
   
   configAP(); 
 
-  // if DNSServer is started with "*" for domain name, it will reply with
-  // provided IP to all DNS request
-  dnsServer.start(DNS_PORT, "*", apIP);
 }
 
 

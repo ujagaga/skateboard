@@ -6,7 +6,6 @@
 extern char myApName[64];
 
 extern void WIFIC_init(void);
-extern void WIFIC_process(void);
 
 
 #endif
