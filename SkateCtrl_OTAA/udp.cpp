@@ -1,6 +1,8 @@
 #include <WiFiUdp.h>
 #include <ESP8266WiFi.h>
 #include "config.h"
+#include "SkateCtrl_OTAA"
+
 
 static WiFiUDP Udp;
 static char incomingPacket[255];        /* buffer for incoming packets */
