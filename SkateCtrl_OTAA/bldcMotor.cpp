@@ -13,7 +13,21 @@ static uint8_t currentCmdVal = 0;
 static unsigned long halSensTimestamp[2] = {0};
 static uint16_t relativeSpeed = 0;
 static uint16_t lastHalSensorTickTimespan = 0;
- 
+static unsigned long cmdTimestamp = 0;
+static unsigned long executeTimestamp = 0;
+static bool accelerateFlag = false;
+static bool breakFlag = false;
+static bool cruiseFlag = false;
+
+bool cmdExpired(void)
+{
+  return (millis() - cmdTimestamp) > CMD_TIMEOUT;
+}
+
+bool executeRefreshTimeoutReached(void)
+{
+  return (millis() - executeTimestamp) > EXEC_REFRESH_TIMEOUT;
+}
 
 uint8_t BLDCM_getCurrentCmdVal( void ){
   return currentCmdVal;
@@ -21,6 +35,48 @@ uint8_t BLDCM_getCurrentCmdVal( void ){
 
 uint16_t BLDCM_getRelativeSpeed( void ){
   return relativeSpeed;
+}
+
+bool BLDCM_setCommand(user_cmd_t cmd)
+{
+  bool ack = true;
+  cmdTimestamp = millis();
+
+  switch(cmd){
+    case cmd_none:
+      accelerateFlag = false;
+      breakFlag = false;
+      break;
+      
+    case cmd_accelerate:
+      accelerateFlag = true;
+      breakFlag = false;
+      break;      
+      
+    case cmd_stop:
+      accelerateFlag = false;
+      breakFlag = true;
+      break; 
+
+    case cmd_cruiseCtrlOn:
+      cruiseFlag = true;
+      break;
+
+    case cmd_cruiseCtrlOff:
+      cruiseFlag = false;
+      break;
+
+    default:
+      accelerateFlag = false;
+      breakFlag = false;
+      cruiseFlag = false;
+      cmdTimestamp = 0;
+      ack = false;
+      break;
+    
+  }
+
+  return ack;
 }
 
 /* Set command analog level in percentage */
@@ -79,7 +135,26 @@ void BLDCM_process(void)
     if(relativeSpeed < MIN_RELATIVE_SPEED){
       BLDCM_writeCmd(STOP);
     }else{
-      
+      /* Process user request */
+      if(!cmdExpired()){
+        if(executeRefreshTimeoutReached()){
+          if(accelerateFlag){          
+            uint8_t level = currentCmdVal * 1.1;
+  
+            if(currentCmdVal > CMD_LEVEL_MAX){
+              if(level > CMD_LEVEL_MAX){
+                level = CMD_LEVEL_MAX;
+              }
+              
+              BLDCM_writeCmd(level);
+            }
+          }else if(breakFlag){
+            
+          }
+        }
+      }else{
+        accelerateFlag = false;
+      }
     }
     
   }else{

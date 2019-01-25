@@ -3,5 +3,6 @@
 
 extern void UDP_init(void);
 extern void UDP_process(void);
+extern void UDP_send(String msg);
 
 #endif

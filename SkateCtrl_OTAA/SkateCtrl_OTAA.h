@@ -3,10 +3,13 @@
 
 #include <ESP8266WiFi.h>
 
+#define AP_NAME                 "ujagaga_skate"
+#define AP_PASS                 "SkatePass123"
 #define UDP_PORT                (4213u)  
-#define AP_NAME_PREFIX          "ujagaga_skate_"
+#define CMD_TIMEOUT             (350u)
+#define EXEC_REFRESH_TIMEOUT    (100u)
 
-#define PIN_EL                  D1
+#define PIN_EL                  D1 
 #define PIN_TAHO                D2
 #define PIN_CMD                 D3
 #define PIN_LED                 D4

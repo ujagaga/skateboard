@@ -14,6 +14,7 @@ void setup(void) {
   UDP_init(); 
   ESP.wdtFeed();
   OTAA_init();
+  BLDCM_init();
 }
 
 

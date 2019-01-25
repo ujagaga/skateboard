@@ -1,9 +1,9 @@
 #include <ArduinoOTA.h>
-#include "wifi_connection.h"
+#include "SkateCtrl_OTAA.h"
 
 void OTAA_init() {
-  ArduinoOTA.setHostname(myApName);
-  ArduinoOTA.setPassword((const char *)"ohana13");
+  ArduinoOTA.setHostname(AP_NAME);
+  ArduinoOTA.setPassword(AP_PASS);
 
   ArduinoOTA.onStart([]() {
     String type;
