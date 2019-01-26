@@ -1,4 +1,4 @@
-#include "SkateCtrl_OTAA.h"
+#include "config.h"
 #include "bldcMotor.h"
 
 #define CMD_LEVEL_MAX             (100u)

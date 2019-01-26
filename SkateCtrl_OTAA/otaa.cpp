@@ -1,5 +1,5 @@
 #include <ArduinoOTA.h>
-#include "SkateCtrl_OTAA.h"
+#include "config.h"
 
 void OTAA_init() {
   ArduinoOTA.setHostname(AP_NAME);

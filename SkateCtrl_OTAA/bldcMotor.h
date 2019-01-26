@@ -5,7 +5,7 @@
 
 typedef enum
 {
-  cmd_none,
+  cmd_none = 0,
   cmd_accelerate,
   cmd_stop,
   cmd_cruiseCtrlOn,
@@ -17,5 +17,6 @@ extern void BLDCM_writeCmd(uint8_t val);
 extern uint8_t BLDCM_getCurrentCmdVal( void );
 extern void BLDCM_process(void);
 extern bool BLDCM_setCommand(user_cmd_t cmd);
+extern uint16_t BLDCM_getRelativeSpeed( void );
 
 #endif

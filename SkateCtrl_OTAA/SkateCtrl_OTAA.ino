@@ -1,28 +1,23 @@
 #include "udp.h"
 #include "wifi_connection.h"
-#include "SkateCtrl_OTAA.h"
+#include "config.h"
 #include "otaa.h"
 #include "bldcMotor.h"
 
-
+/* Initialization */
 void setup(void) {
   Serial.begin(115200,SERIAL_8N1,SERIAL_TX_ONLY); /* Use only tx, so rx can be used as GPIO */   
-  //ESP.eraseConfig();
     
   WIFIC_init(); 
-  ESP.wdtFeed();
   UDP_init(); 
-  ESP.wdtFeed();
   OTAA_init();
   BLDCM_init();
 }
 
-
+/* Main infinite while loop */
 void loop(void) {  
   ESP.wdtFeed();
   UDP_process();
-  ESP.wdtFeed();
   OTAA_process(); 
-  ESP.wdtFeed();
   BLDCM_process();
 }

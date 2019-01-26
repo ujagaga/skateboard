@@ -1,5 +1,5 @@
 #include <ESP8266WiFi.h>
-#include "SkateCtrl_OTAA.h"
+#include "config.h"
 
 
 static char myApName[] = AP_NAME; 
