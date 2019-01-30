@@ -19,6 +19,5 @@ void UDP_send(String msg){
   
   Udp.beginPacket(WiFi.gatewayIP(), UDP_PORT);
   Udp.write(txBuffer);
-  Udp.endPacket();   
-  
+  Udp.endPacket();     
 }
