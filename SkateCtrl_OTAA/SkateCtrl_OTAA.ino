@@ -17,7 +17,11 @@ void setup(void) {
 /* Main infinite while loop */
 void loop(void) {  
   ESP.wdtFeed();
-  UDP_process();
-  OTAA_process(); 
+  UDP_process();  
   BLDCM_process();
+
+  if(millis() < OTAA_UPDATE_TIMEOUT)
+  { /* After a timeout stop processing OTAA to save processor time. */
+    OTAA_process(); 
+  }
 }

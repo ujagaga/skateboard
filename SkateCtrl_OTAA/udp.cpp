@@ -4,7 +4,7 @@
   
 #define MAX_UDP_RX_SIZE         (255u)
 #define CMD_PREFIX              "CMD_"  /* To be used for commands like CMD_0, CMD_1,... */ 
-#define CMD_NUMBER_SEPARATOR    '-'
+#define CMD_NUMBER_SEPARATOR    '_'
 #define STAT_REQUEST            "STAT"
 #define CMD_INVALID             (-1)
 #define CMD_OK                  "OK"

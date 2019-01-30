@@ -1,3 +1,8 @@
+/*
+* A user command is expected to be set at rate faster than every 350ms using BLDCM_setCommand(). 
+* If it times out the motor controll is disabled.
+*/
+
 #include "config.h"
 #include "bldcMotor.h"
 
@@ -7,17 +12,22 @@
 #define MIN_RELATIVE_SPEED        (2u)
 #define OLD                       (0u)
 #define NEW                       (1u)
-#define STOP                      (0u)
+#define STOP                      (-1)
+#define CMD_NONE                  (0)
+#define FORWARD                   LOW
+#define REVERSE                   HIGH
+#define ENABLE                    HIGH
+#define DISABLE                   LOW
+
 
 static uint8_t currentCmdVal = 0;
-static unsigned long halSensTimestamp[2] = {0};
+static unsigned long halSensTimestamp = 0;
 static uint16_t relativeSpeed = 0;
-static uint16_t lastHalSensorTickTimespan = 0;
+static uint16_t relativeCruiseSpeed = 0;
 static unsigned long cmdTimestamp = 0;
 static unsigned long executeTimestamp = 0;
-static bool accelerateFlag = false;
-static bool breakFlag = false;
-static bool cruiseFlag = false;
+static user_cmd_t userRequest = cmd_none;
+static uint16_t halSensorTickTimespan = 0;
 
 bool cmdExpired(void)
 {
@@ -29,138 +39,154 @@ bool executeRefreshTimeoutReached(void)
   return (millis() - executeTimestamp) > EXEC_REFRESH_TIMEOUT;
 }
 
-uint8_t BLDCM_getCurrentCmdVal( void ){
-  return currentCmdVal;
+/* Set command analog level in percentage */
+static void writeCmd(int8_t val)
+{ 
+  int32_t level = val;
+
+  if(level > CMD_LEVEL_MAX){
+    level = CMD_LEVEL_MAX;
+  }
+
+  if(level < 0){    
+    currentCmdVal = 0;    
+  }else{    
+    currentCmdVal = level;
+  }
+
+  if(level < 0){
+    /* Stop requested */
+    currentCmdVal = 0;
+    digitalWrite(PIN_DIR, REVERSE);
+    
+    /* TODO: think of a better strategy */    
+    if((relativeSpeed * 2) > (MAX_TIMEOUT/EXEC_REFRESH_TIMEOUT)){
+      /* Keep breaking */
+      level = 10;      
+    }else{      
+      level = 0;
+    }    
+  }else{
+    digitalWrite(PIN_DIR, FORWARD);
+    
+    currentCmdVal = level;    
+
+    level = currentCmdVal * 10 + currentCmdVal / 4;
+
+    if(level > ANALOG_LEVEL_MAX){
+      level = ANALOG_LEVEL_MAX;
+    }
+  }
+  
+  analogWrite(PIN_CMD, level);
+
+  executeTimestamp = millis();
+}
+
+void handleTahoCount() {
+  halSensorTickTimespan = millis() - halSensTimestamp;
+  halSensTimestamp = millis();
 }
 
 uint16_t BLDCM_getRelativeSpeed( void ){
   return relativeSpeed;
 }
 
-bool BLDCM_setCommand(user_cmd_t cmd)
-{
-  bool ack = true;
-  cmdTimestamp = millis();
-
-  switch(cmd){
-    case cmd_none:
-      accelerateFlag = false;
-      breakFlag = false;
-      break;
-      
-    case cmd_accelerate:
-      accelerateFlag = true;
-      breakFlag = false;
-      break;      
-      
-    case cmd_stop:
-      accelerateFlag = false;
-      breakFlag = true;
-      break; 
-
-    case cmd_cruiseCtrlOn:
-      cruiseFlag = true;
-      break;
-
-    case cmd_cruiseCtrlOff:
-      cruiseFlag = false;
-      break;
-
-    default:
-      accelerateFlag = false;
-      breakFlag = false;
-      cruiseFlag = false;
-      cmdTimestamp = 0;
-      ack = false;
-      break;
-    
-  }
-
-  return ack;
-}
-
-/* Set command analog level in percentage */
-void BLDCM_writeCmd(uint8_t val)
+void BLDCM_setCommand(user_cmd_t cmd)
 { 
-  uint32_t level = val;
-
-  if(level > CMD_LEVEL_MAX){
-    level = CMD_LEVEL_MAX;
+  if(cmd == cmd_cruise){
+    relativeCruiseSpeed = relativeSpeed;
   }
-  
-  if(level > 0){
-    digitalWrite(PIN_EL, HIGH);
-  }else{
-    digitalWrite(PIN_EL, LOW);
-  }
-  
-  currentCmdVal = level;
 
-  level = level * 10 + level / 4;
-
-  if(level > ANALOG_LEVEL_MAX){
-    level = ANALOG_LEVEL_MAX;
-  }    
-
-  analogWrite(PIN_CMD, level);
-}
-
-void handleTahoCount() {
-  halSensTimestamp[OLD] = halSensTimestamp[NEW];
-  halSensTimestamp[NEW] = millis();
+  userRequest = cmd;
+    
+  cmdTimestamp = millis();  
 }
 
 void BLDCM_init(void)
 {
   pinMode(PIN_EL, OUTPUT);
   pinMode(PIN_CMD, OUTPUT);
-  pinMode(PIN_LED, OUTPUT);
-  digitalWrite(PIN_EL, LOW);
-  digitalWrite(PIN_LED, HIGH);
-  BLDCM_writeCmd(0);
+  pinMode(PIN_DIR, OUTPUT);
+  digitalWrite(PIN_EL, ENABLE);
+  digitalWrite(PIN_DIR, FORWARD);
+  writeCmd(CMD_NONE);
 
   pinMode(PIN_TAHO, INPUT);
   attachInterrupt(digitalPinToInterrupt(PIN_TAHO), handleTahoCount, RISING);
 }
 
 void BLDCM_process(void)
-{
-  uint16_t halSensorTickTimespan = halSensTimestamp[NEW] - halSensTimestamp[OLD];
+{ 
 
-  if((millis() - halSensTimestamp[OLD]) < MAX_TIMEOUT)
-  {
-    
+  if((millis() - halSensTimestamp) < MAX_TIMEOUT)
+  {    
     relativeSpeed = MAX_TIMEOUT / halSensorTickTimespan;
 
     if(relativeSpeed < MIN_RELATIVE_SPEED){
-      BLDCM_writeCmd(STOP);
+      writeCmd(CMD_NONE);
     }else{
-      /* Process user request */
-      if(!cmdExpired()){
-        if(executeRefreshTimeoutReached()){
-          if(accelerateFlag){          
-            uint8_t level = currentCmdVal * 1.1;
-  
-            if(currentCmdVal > CMD_LEVEL_MAX){
-              if(level > CMD_LEVEL_MAX){
-                level = CMD_LEVEL_MAX;
-              }
-              
-              BLDCM_writeCmd(level);
-            }
-          }else if(breakFlag){
-            
-          }
-        }
-      }else{
-        accelerateFlag = false;
+      /* Process user request, but only if we are mooving. */
+      uint8_t level;
+      
+      if(cmdExpired()){
+        userRequest = cmd_none;
       }
+      
+      switch(userRequest){
+        case cmd_accelerate:
+        {
+          if(executeRefreshTimeoutReached()){ 
+            if(currentCmdVal < 10){
+              level = currentCmdVal + 1;
+            }else{
+              level = currentCmdVal * 1.1; 
+            }
+                        
+            writeCmd(level);            
+          }
+        }break;
+
+        case cmd_cruise:
+        {
+          if(executeRefreshTimeoutReached()){
+            if(relativeCruiseSpeed < relativeSpeed){
+              /* Accelerate */
+              if(currentCmdVal < 10){
+                level = currentCmdVal + 1;
+              }else{
+                level = currentCmdVal * 1.1; 
+              }
+            }else{
+              /* slow down */
+              if(currentCmdVal < 10){
+                level = currentCmdVal - 1;
+              }else{
+                level = currentCmdVal * 0.7; 
+              }
+
+              if(level < 0){
+                level = 0;
+              }              
+            }
+
+            writeCmd(level);   
+          }
+        }break;
+
+        case cmd_stop:
+        {
+          writeCmd(STOP);
+        }break;
+
+        default:
+          writeCmd(CMD_NONE);
+          break;
+      }            
     }
     
   }else{
-    BLDCM_writeCmd(STOP);
+    writeCmd(CMD_NONE);
+    relativeSpeed = 0;
   }
-
-  lastHalSensorTickTimespan = halSensorTickTimespan;
 }
-
