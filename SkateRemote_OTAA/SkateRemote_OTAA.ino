@@ -109,6 +109,7 @@ static void processBatteryCharging(void){
 void setup(void) {
   Serial.begin(115200,SERIAL_8N1,SERIAL_TX_ONLY); /* Use only tx, so rx can be used as GPIO */   
     
+  WiFi.mode(WIFI_STA);
   WiFi.setAutoReconnect(true);
   WiFi.begin(AP_NAME, AP_PASS); 
    

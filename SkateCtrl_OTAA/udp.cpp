@@ -35,7 +35,7 @@ void UDP_send(String msg){
   if(msgLen < MAX_UDP_RX_SIZE){
     char txBuffer[msgLen + 1];
       
-    msg.toCharArray(txBuffer, msgLen);
+    msg.toCharArray(txBuffer, msgLen + 1);
     txBuffer[msgLen] = 0; 
     
     Udp.beginPacket(IP_Remote, UDP_PORT);

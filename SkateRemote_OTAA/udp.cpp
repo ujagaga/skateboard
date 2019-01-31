@@ -14,7 +14,7 @@ void UDP_send(String msg){
   
   char txBuffer[MAX_UDP_RX_SIZE];
     
-  msg.toCharArray(txBuffer, msgLen);
+  msg.toCharArray(txBuffer, msgLen + 1);
   txBuffer[msgLen] = 0; 
   
   Udp.beginPacket(WiFi.gatewayIP(), UDP_PORT);
