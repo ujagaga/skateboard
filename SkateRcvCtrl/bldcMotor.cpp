@@ -14,12 +14,12 @@
 
 static volatile uint32_t halSensTimestamp = 0;
 static volatile uint32_t relativeSpeed = 0;        // relativeSpeed/10 => speed in kmph
-static unsigned long executeTimestamp = 0;
+static uint32_t executeTimestamp = 0;
 static user_cmd_t activeCmd = cmd_none;
-static uint16_t currentCmdVal = 0;
+static uint32_t currentCmdVal = 0;
 static bool stop_request_flag = false;
 static uint32_t target_speed = 0;
-static uint8_t tahoCount = 0;
+static uint32_t tahoCount = 0;
 static uint32_t lastTahoCount = 0;
 static bool moovingFlag = false;
 
@@ -57,9 +57,9 @@ void handleTahoCount()
   }  
 }
 
-uint16_t BLCMD_getCmdVoltage()
+uint32_t BLCMD_getCmdVoltage()
 {
-  return (uint16_t)currentCmdVal;
+  return currentCmdVal;
 }
 
 void BLDCM_setTargetSpeed(uint8_t percent)
@@ -88,9 +88,9 @@ void BLDCM_setSpeed(uint32_t val)
     level = ANALOG_LEVEL_MAX;
   }
   
-//  if(!mooving()){     
-//    level = 0;
-//  }
+  if(!moovingFlag){     
+    level = 0;
+  }
   
   currentCmdVal = level;
 
@@ -191,6 +191,6 @@ void BLDCM_process(void)
     lastTahoCount = tahoCount;
     moovingFlag = (tahoImpulses > 4);    
     
-    executeTimestamp = millis();   
-
+    executeTimestamp = millis(); 
+  } 
 }

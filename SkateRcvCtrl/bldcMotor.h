@@ -15,7 +15,7 @@ extern void BLDCM_init(void);
 extern void BLDCM_process(void);
 extern void BLDCM_setSpeed(uint32_t val);
 extern uint16_t BLCMD_getSpeed(void);
-extern uint16_t BLCMD_getCmdVoltage();
+extern uint32_t BLCMD_getCmdVoltage();
 extern void BLDCM_setTargetSpeed(uint8_t percent);
 
 #endif

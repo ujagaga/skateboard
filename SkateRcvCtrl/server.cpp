@@ -1,7 +1,6 @@
 #include <WebSocketsServer.h>
 #include "config.h"
 #include "bldcMotor.h"
-#include "SkateRcvCtrl.h"
 #include "ota.h"
 #include "wifi_connection.h"
 
