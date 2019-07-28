@@ -4,7 +4,6 @@
 #include "bldcMotor.h"
 #include "config.h"
 #include "ota.h"
-#include "current.h"
 
 
 /* Initialization */
@@ -13,12 +12,7 @@ void setup(void) {
   Serial.begin(115200); 
   Serial.println("\n\n");
 
-#ifdef TEST_MODE
-  WIFIC_init_STA(); 
-#else
   WIFIC_init_AP();
-#endif
-
   SERVER_init(); 
   BLDCM_init();
 }
@@ -30,6 +24,5 @@ void loop(void) {
   }else{
     SERVER_process();  
     BLDCM_process();
-    CURR_process();
   }
 }

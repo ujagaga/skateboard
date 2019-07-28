@@ -1,39 +1,32 @@
 #include "config.h"
 #include "bldcMotor.h"
 #include "server.h"
-#include "current.h"
+
 
 #define MAX_HAL_TIMEOUT                 (60 * 1000)/(MINIMUM_SPEED_RPM * HAL_TICKS_PER_REV)
 #define ONE_KMPH_TIMEOUT                (25000ul)
 #define ANALOG_LEVEL_MAX                (1023)
 #define ANALOG_LEVEL_MIN                (160u)
 #define MIN_RELATIVE_SPEED              (2u)
-#define FORWARD                         LOW
-#define REVERSE                         HIGH
-#define ENABLE                          LOW
-#define DISABLE                         HIGH
 #define SPEED_NONE_CMD                  (0)
-#define CMD_SOUND_FREQ                  (2500u)
-#define CMD_OFF_SOUND_FREQ              (1500u)
-#define HONK_SOUND_FREQ                 (600u)
-#define SL_ON_SOUND_FREQ                (2500u)
-#define SL_OFF_SOUND_FREQ               (1500u)
-#define SL_TGL_SOUND_FREQ               (2000u)
 #define SPEED_TO_VOLTAGE_MULTIPLIER     (28u)
 
 
 static volatile uint32_t halSensTimestamp = 0;
-static volatile uint32_t avgHalSensorTickTimespan = MAX_HAL_TIMEOUT * 2;
 static volatile uint32_t relativeSpeed = 0;        // relativeSpeed/10 => speed in kmph
 static unsigned long executeTimestamp = 0;
 static user_cmd_t activeCmd = cmd_none;
 static uint16_t currentCmdVal = 0;
 static bool stop_request_flag = false;
 static uint32_t target_speed = 0;
+static uint8_t tahoCount = 0;
+static uint32_t lastTahoCount = 0;
+static bool moovingFlag = false;
 
-static void setBrake(uint32_t level){
+static void setBrake(bool brakeState)
+{
   BLDCM_setSpeed(0);
-  if(level > 1){
+  if(brakeState){
     digitalWrite(PIN_BRAKE, HIGH); 
   }else{
     digitalWrite(PIN_BRAKE, LOW); 
@@ -45,31 +38,32 @@ static bool executeRefreshTimeoutReached(void)
   return (millis() - executeTimestamp) > EXEC_REFRESH_TIMEOUT;
 }
 
-static bool mooving(void){ 
- //return true;
-#ifdef TEST_MODE
-  return true;
-#else
-  if((micros() - halSensTimestamp) < 100){
-      return ((relativeSpeed/10) > 0);
-  }else{
-      return false;  
-  }
-#endif
-}
 
-void handleTahoCount() {   
+void handleTahoCount() 
+{   
   uint32_t lastHalSensorTickTimespan = micros() - halSensTimestamp;
   halSensTimestamp = micros(); 
-  avgHalSensorTickTimespan = (avgHalSensorTickTimespan + lastHalSensorTickTimespan)/2; 
-  relativeSpeed = (ONE_KMPH_TIMEOUT * 10) / avgHalSensorTickTimespan; 
+  relativeSpeed = (ONE_KMPH_TIMEOUT * 10) / lastHalSensorTickTimespan; 
+
+  tahoCount++;
+
+  if(tahoCount > 4){  /* Only keep brake on every 4-th hal tick. This way we get 25% PWM on the brakes. */
+    tahoCount = 0;
+    if(stop_request_flag){
+      setBrake(true);
+    }
+  }else{
+    setBrake(false);
+  }  
 }
 
-uint16_t BLCMD_getCmdVoltage(){
+uint16_t BLCMD_getCmdVoltage()
+{
   return (uint16_t)currentCmdVal;
 }
 
-void BLDCM_setTargetSpeed(uint8_t percent){
+void BLDCM_setTargetSpeed(uint8_t percent)
+{
   if(percent > 100){
     percent = 100;
   }
@@ -78,10 +72,10 @@ void BLDCM_setTargetSpeed(uint8_t percent){
 
   /* Adjust current control voltage to value near current speed, so we do not wait long to accelerate. */
   uint32_t targetCtrlVoltage = (relativeSpeed / 10) * SPEED_TO_VOLTAGE_MULTIPLIER;
-  if((targetCtrlVoltage + ACCELERATE_INCREMENT) < currentCmdVal){
+  if((targetCtrlVoltage + ACCELERATE_INCREMENT) < currentCmdVal)
+  {
     BLDCM_setSpeed(targetCtrlVoltage);
   }
-
 }
 
 
@@ -89,7 +83,8 @@ void BLDCM_setTargetSpeed(uint8_t percent){
 void BLDCM_setSpeed(uint32_t val)
 { 
   uint32_t level = val;
-  if(level > ANALOG_LEVEL_MAX){
+  if(level > ANALOG_LEVEL_MAX)
+  {
     level = ANALOG_LEVEL_MAX;
   }
   
@@ -101,7 +96,6 @@ void BLDCM_setSpeed(uint32_t val)
 
   /* We have an inverting switch HW, so invert the value. */
   level = ANALOG_LEVEL_MAX - level;
-  digitalWrite(PIN_DIR, FORWARD);  
   analogWrite(PIN_CMD, level);  
   
 }
@@ -109,17 +103,14 @@ void BLDCM_setSpeed(uint32_t val)
 
 void BLDCM_init(void)
 {
-  pinMode(PIN_EL, OUTPUT);
-  pinMode(PIN_CMD, OUTPUT);
-  pinMode(PIN_DIR, OUTPUT);
-  pinMode(PIN_SPEAKER, OUTPUT);
-  pinMode(PIN_BRAKE, OUTPUT);
 
+  pinMode(PIN_BRAKE, OUTPUT);
   digitalWrite(PIN_BRAKE, LOW); 
-  digitalWrite(PIN_EL, ENABLE);
-  digitalWrite(PIN_DIR, FORWARD);  
-  digitalWrite(PIN_SPEAKER, LOW); 
   
+  pinMode(PIN_EL, OUTPUT);
+  digitalWrite(PIN_EL, HIGH);
+  
+  pinMode(PIN_CMD, OUTPUT);   
   BLDCM_setSpeed(SPEED_NONE_CMD);
 
   pinMode(PIN_TAHO, INPUT);
@@ -127,7 +118,8 @@ void BLDCM_init(void)
    
 }
 
-uint16_t BLCMD_getSpeed(void){ 
+uint16_t BLCMD_getSpeed(void)
+{ 
   return (relativeSpeed/10);
 }
 
@@ -140,30 +132,38 @@ void BLDCM_process(void)
     executeTimestamp = 0;    
   } 
   
-  if(executeRefreshTimeoutReached()){  
+  if(executeRefreshTimeoutReached())
+  {  
     user_cmd_t lastCmd = activeCmd;
     activeCmd = userRequest;
     
     uint32_t level = 0;
     
-    switch(userRequest){
+    switch(userRequest)
+    {
       case cmd_accelerate:
       {       
-        if(stop_request_flag){
+        if(stop_request_flag)
+        {
           stop_request_flag = false;
-          setBrake(0);    
+          setBrake(false);    
           level = ANALOG_LEVEL_MIN;
-        }else if(currentCmdVal < ANALOG_LEVEL_MIN){
+        }else if(currentCmdVal < ANALOG_LEVEL_MIN)
+        {
           level = ANALOG_LEVEL_MIN;
-        }else{
-          if(relativeSpeed < target_speed){    
-            if(((relativeSpeed * 100) / target_speed) > 80){
-              /* Getting close to target. Slow down acceleration pace. */
+        }else
+        {
+          if(relativeSpeed < target_speed)
+          {    
+            if(((relativeSpeed * 100) / target_speed) > 80)
+            {  /* Getting close to target. Slow down acceleration pace. */
                level = currentCmdVal + (ACCELERATE_INCREMENT / 2);        
-            }else{
+            }else
+            {
               level = currentCmdVal + ACCELERATE_INCREMENT;
             }
-          }else{           
+          }else
+          {           
             level = currentCmdVal - ACCELERATE_INCREMENT;
           }
         }        
@@ -172,15 +172,13 @@ void BLDCM_process(void)
       case cmd_none:
       {
         stop_request_flag = false; 
-        setBrake(0);    
+        setBrake(false);    
       }break;
            
       case cmd_stop:
       {
         stop_request_flag = true;  
         BLDCM_setSpeed(0);
-        delay(100);
-        setBrake(300);
       }break;
 
       default:          
@@ -188,6 +186,11 @@ void BLDCM_process(void)
     }     
 
     BLDCM_setSpeed(level); 
+
+    uint32_t tahoImpulses = tahoCount - lastTahoCount;
+    lastTahoCount = tahoCount;
+    moovingFlag = (tahoImpulses > 4);    
+    
     executeTimestamp = millis();   
-  }
+
 }
