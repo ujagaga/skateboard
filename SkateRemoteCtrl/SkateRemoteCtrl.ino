@@ -1,113 +1,125 @@
 #include "config.h"
 #include "wifi_connection.h"
-#include "ota.h"
 #include "ws_client.h"
 
-#define MAX_KEY_TEST_COUNT            (20u)
-static bool otaModeFlag = false;
+#define THREASHOLD        (5u)
+#define CMD_READ_INTERVAL (200u)
+#define LED_BLINK_COUNT   (6u)
 
-/* Define button type */
-typedef enum{
-  key_none,
-  key_stop,
-  key_accel,
-  key_cruise,
-  key_horn
-}key_id_t;    
+static String lastCmd = "";
+static bool fwdCmd = false;
+static volatile uint32_t readTimestamp = 0;
+static uint8_t ledBlinkCounter = 0;
+static int calibrateValue = 508;
 
-static bool keyPressed(key_id_t keyToTest){ 
-  bool test[3] = {0};
-  bool currentTest;
-  bool testDone = false;
-  int testCount = 0;
-  bool testResult = false;
 
-  /* Loop untill we get identical consecutive readings */
-  do{ 
-    
-    switch(keyToTest){
-      case key_stop:
-        currentTest = (digitalRead(PIN_BREAK) == LOW);
-        break;
-      case key_accel:
-        currentTest = (digitalRead(PIN_ACCEL) == LOW);
-        break;
-      case key_cruise:
-        currentTest = (digitalRead(PIN_CRUISE) == LOW);
-        break;
-      case key_horn:
-        currentTest = (digitalRead(PIN_HORN) == LOW);
-        break;
-      default:
-        currentTest = false;       
+void goToSleep(){
+
+  digitalWrite(PIN_LED, LOW); 
+  digitalWrite(PIN_ENABLE, LOW); 
+  
+  ESP.deepSleep(0);
+}
+
+uint8_t readCmd(){
+  uint8_t percentage;
+  
+  int32_t sensorValue = analogRead(PIN_ANALOG);
+  int fullRangeValue;  
+  
+  if(sensorValue > calibrateValue){
+    fwdCmd = false;
+    sensorValue -= calibrateValue;
+    fullRangeValue = 1020 - calibrateValue;
+  }else{
+    fwdCmd = true;
+    sensorValue = calibrateValue - sensorValue;
+    fullRangeValue = calibrateValue - 4;
+  }
+
+  if(sensorValue < THREASHOLD){
+    percentage = 0;
+  }else{
+    percentage = (sensorValue * 100) / fullRangeValue;
+
+    if(percentage > 100){
+      percentage = 100;
     }
-
-    test[0] = test[1]; 
-    test[1] = test[2];
-    test[2] = currentTest;     
-      
-    testCount++;
-    
-    if(testCount < 3){      
-      delay(5);
-    }else{
-      if(testCount > MAX_KEY_TEST_COUNT){
-        testDone = true; 
-        testResult = false;       
-      }else{        
-        if((test[0] == test[1]) && (test[1] == test[2])){
-          testDone = true; 
-          testResult = test[0]; 
-        }else{
-          delay(5);
-        }
-      }
-    }  
-    
-  }while(!testDone);
-
-  return testResult;
+  }  
+  
+  return percentage;
 }
 
 
 /* Initialization */
 void setup(void) {
-  pinMode(PIN_ACCEL, INPUT_PULLUP);
-  pinMode(PIN_CRUISE, INPUT_PULLUP);
-  pinMode(PIN_BREAK, INPUT_PULLUP);
-  pinMode(PIN_HORN, INPUT_PULLUP);
+  pinMode(PIN_LED, OUTPUT);
+  pinMode(PIN_ENABLE, OUTPUT);
 
-  WIFIC_init();
+  digitalWrite(PIN_LED, HIGH); 
+  digitalWrite(PIN_ENABLE, HIGH); 
+
+  Serial.begin(115200);
+
+  delay(500);
+
+  calibrateValue = analogRead(PIN_ANALOG);  
   
-  if( keyPressed(key_stop)){
-    otaModeFlag = true;
-    OTA_init();
-    WIFIC_connectToMainNetwork();
-  }else{
-    WIFIC_connectToScate();
-    WS_init();
-  }
+  WIFIC_init();    
+  WIFIC_connectToScate();
+//  WIFIC_connectToMainNetwork();
+  WS_init();
 }
 
 
 /* Main infinite while loop */
 void loop(void) {
-  if(otaModeFlag){
-    OTA_process();
-  }else{
-    /* Process buttons */
-    if( keyPressed(key_stop)){
-      WS_send(CMD_STOP);     
-    }else if(keyPressed(key_accel)){
-      WS_send(CMD_ACCEL);  
-    }else if( keyPressed(key_cruise)){
-      WS_send(CMD_CRUISE);  
-    }else if( keyPressed(key_horn)){
-      WS_send(CMD_HORN);  
-    }else{
-      WS_send(CMD_NONE); 
-    }  
+  uint8_t cmdVal;
 
-    WS_process();
+  if((millis() - readTimestamp) > CMD_READ_INTERVAL){
+    cmdVal = readCmd();
+  
+    String cmd;
+
+    if(cmdVal == 0){
+      cmd = CMD_NONE;
+    }else if(fwdCmd){
+      cmd = CMD_ACCEL;
+    }else{
+      cmd = CMD_STOP;
+    }
+
+    if(cmdVal < 10){
+      cmd += "00";
+    }else if(cmdVal < 100){
+      cmd += "0";
+    }
+    
+    cmd += String(cmdVal);
+
+    if(!lastCmd.equals(cmd)){
+    
+      Serial.println(cmd);
+      WS_send(cmd);  
+
+      lastCmd = cmd;
+    }  
+    
+    readTimestamp = millis();
+    ledBlinkCounter++;    
   }
+
+
+  if(ledBlinkCounter > LED_BLINK_COUNT){
+    ledBlinkCounter = 0;
+  }
+  
+  if(ledBlinkCounter == 0){
+    digitalWrite(PIN_LED, HIGH); 
+  }else if(WIFIC_checkIfConnected()){
+    digitalWrite(PIN_LED, LOW); 
+  }
+  
+  WS_process();
+ 
 }

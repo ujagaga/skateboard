@@ -11,28 +11,23 @@
 #define SERVER_IP               "192.168.10.1"
 #define SERVER_PORT             (4213u)  
 #define CMD_TIMEOUT             (150u)
-#define BATT_FULL_COUNT         (800u)    /* Measuring of the ADC at battery full voltage. */
-#define BATT_LOW_COUNT          (700u)    /* Measuring of the ADC at battery low voltage. */
-#define BATT_MIN_COUNT          (100u)    /* Minimum voltage to consider the battery connected */
+#define CONNECTION_TIMEOUT      (10000u)
+
 
 /* ESP-01 pin defines */
+#define PIN_ANALOG              (A0)
 #define PIN_UARTTX              (1u)
 #define PIN_UARTRX              (3u)
-#define PIN_GPIO0               (0u)
-#define PIN_GPIO2               (2u)
+#define PIN_GPIO14              (14u)
+#define PIN_GPIO04              (4u)
 
-/* Connections */
-#define PIN_ACCEL               PIN_UARTTX 
-#define PIN_CRUISE              PIN_GPIO0
-#define PIN_BREAK               PIN_UARTRX
-#define PIN_HORN                PIN_GPIO2
+#define PIN_LED                 PIN_GPIO04
+#define PIN_ENABLE              PIN_GPIO14
 
 
 /* Commands */
 #define CMD_NONE      "n"
 #define CMD_ACCEL     "a"
-#define CMD_CRUISE    "c"
 #define CMD_STOP      "s"
-#define CMD_HORN      "h"
 
 #endif

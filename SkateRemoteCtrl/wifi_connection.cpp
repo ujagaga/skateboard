@@ -2,8 +2,31 @@
 #include <WiFiClient.h>
 #include "config.h"
 
-
+static volatile uint32_t noConnectionTimestamp = 0;
 static char devName[32] = {0};    /* Array to form device name based on MAC */
+
+bool WIFIC_checkIfConnected(){  
+  bool connrctionStatus = false;
+  
+  if((noConnectionTimestamp > 0) && ((millis() - noConnectionTimestamp) > CONNECTION_TIMEOUT)){
+    // No server available. Go to sleep.
+
+    Serial.println("SLEEP");
+    digitalWrite(PIN_LED, LOW); 
+    digitalWrite(PIN_ENABLE, LOW);
+        
+    ESP.deepSleep(0);    
+  }
+
+  if(WiFi.status() == WL_CONNECTED) { 
+    noConnectionTimestamp = 0;
+    connrctionStatus = true;
+  }else if(noConnectionTimestamp == 0){
+    noConnectionTimestamp = millis();
+  }
+
+  return connrctionStatus;
+}
 
 void WIFIC_init(void){ 
   String mac = WiFi.macAddress();
@@ -13,6 +36,8 @@ void WIFIC_init(void){
 
   WiFi.mode(WIFI_STA);
   WiFi.setAutoReconnect(true);
+
+  noConnectionTimestamp = 0;
 }
 
 void WIFIC_connectToScate( void ){
