@@ -11,6 +11,7 @@ static bool fwdCmd = false;
 static volatile uint32_t readTimestamp = 0;
 static uint8_t ledBlinkCounter = 0;
 static int calibrateValue = 508;
+static int totalEstimatedVcc = 800; // This is re-calibrated at every start to account for battery drain
 
 
 void goToSleep(){
@@ -25,17 +26,25 @@ uint8_t readCmd(){
   uint8_t percentage;
   
   int32_t sensorValue = analogRead(PIN_ANALOG);
+
+  if(totalEstimatedVcc < sensorValue){
+    totalEstimatedVcc = sensorValue;
+    Serial.println(totalEstimatedVcc);
+  }
+  
   int fullRangeValue;  
   
   if(sensorValue > calibrateValue){
     fwdCmd = false;
     sensorValue -= calibrateValue;
-    fullRangeValue = 1020 - calibrateValue;
+    fullRangeValue = totalEstimatedVcc - calibrateValue; 
   }else{
     fwdCmd = true;
     sensorValue = calibrateValue - sensorValue;
-    fullRangeValue = calibrateValue - 4;
+    fullRangeValue = calibrateValue;
   }
+
+  fullRangeValue -= 4; // Just to make sure we get 100 % when joystick position is maxed. 
 
   if(sensorValue < THREASHOLD){
     percentage = 0;
@@ -97,11 +106,8 @@ void loop(void) {
     
     cmd += String(cmdVal);
 
-    if(!lastCmd.equals(cmd)){
-    
-      Serial.println(cmd);
+    if(!lastCmd.equals(cmd)){  
       WS_send(cmd);  
-
       lastCmd = cmd;
     }  
     

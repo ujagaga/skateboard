@@ -8,28 +8,70 @@
 #define ANALOG_LEVEL_MAX                (1023)
 #define ANALOG_LEVEL_MIN                (160u)
 #define MIN_RELATIVE_SPEED              (2u)
-#define SPEED_NONE_CMD                  (0)
 #define SPEED_TO_VOLTAGE_MULTIPLIER     (28u)
+#define LOW_BRAKE                       (255u)
 
 
 static volatile uint32_t halSensTimestamp = 0;
 static volatile uint32_t relativeSpeed = 0;        // relativeSpeed/10 => speed in kmph
 static uint32_t executeTimestamp = 0;
-static user_cmd_t activeCmd = cmd_none;
+static user_request_t activeCmd;
 static uint32_t currentCmdVal = 0;
 static bool stop_request_flag = false;
 static uint32_t target_speed = 0;
 static uint32_t tahoCount = 0;
 static uint32_t lastTahoCount = 0;
 static bool moovingFlag = false;
+static uint8_t requestedBrakeIntensity = 255;
+static uint8_t brakeCounter = 0;
 
-static void setBrake(bool brakeState)
-{
-  BLDCM_setSpeed(0);
-  if(brakeState){
+
+static void processStopRequest(){
+  if(brakeCounter == requestedBrakeIntensity){
+    brakeCounter = 0;
+    
     digitalWrite(PIN_BRAKE, HIGH); 
   }else{
-    digitalWrite(PIN_BRAKE, LOW); 
+    digitalWrite(PIN_BRAKE, LOW);   
+  }
+
+  brakeCounter++;  
+}
+
+/* Set command analog level in range 0..1023 */
+static void setCurrentSpeed(uint32_t val)
+{ 
+  uint32_t level = val;
+  if(level > ANALOG_LEVEL_MAX)
+  {
+    level = ANALOG_LEVEL_MAX;
+  }
+  
+  if(!moovingFlag){     
+    level = 0;
+  }
+  
+  currentCmdVal = level;
+
+  if(val > 0){
+    digitalWrite(PIN_BRAKE, LOW);   // Disable brake;  
+  }
+  analogWrite(PIN_CMD, level);    
+}
+
+static void setTargetSpeed(uint8_t percent)
+{
+  if(percent > 100){
+    percent = 100;
+  }
+
+  target_speed = (SPEED_LIMIT * percent)/10;  
+
+  /* Adjust current control voltage to value near current speed, so we do not wait long to accelerate. */
+  uint32_t targetCtrlVoltage = (relativeSpeed / 10) * SPEED_TO_VOLTAGE_MULTIPLIER;
+  if((targetCtrlVoltage + ACCELERATE_INCREMENT) < currentCmdVal)
+  {
+    setCurrentSpeed(targetCtrlVoltage);
   }
 }
 
@@ -44,62 +86,16 @@ void handleTahoCount()
   uint32_t lastHalSensorTickTimespan = micros() - halSensTimestamp;
   halSensTimestamp = micros(); 
   relativeSpeed = (ONE_KMPH_TIMEOUT * 10) / lastHalSensorTickTimespan; 
-
-  tahoCount++;
-
-  if(tahoCount > 4){  /* Only keep brake on every 4-th hal tick. This way we get 25% PWM on the brakes. */
-    tahoCount = 0;
-    if(stop_request_flag){
-      setBrake(true);
-    }
-  }else{
-    setBrake(false);
-  }  
+  
+  if(stop_request_flag){
+    processStopRequest();
+  }
 }
 
 uint32_t BLCMD_getCmdVoltage()
 {
   return currentCmdVal;
 }
-
-void BLDCM_setTargetSpeed(uint8_t percent)
-{
-  if(percent > 100){
-    percent = 100;
-  }
-
-  target_speed = (SPEED_LIMIT * percent)/10;  
-
-  /* Adjust current control voltage to value near current speed, so we do not wait long to accelerate. */
-  uint32_t targetCtrlVoltage = (relativeSpeed / 10) * SPEED_TO_VOLTAGE_MULTIPLIER;
-  if((targetCtrlVoltage + ACCELERATE_INCREMENT) < currentCmdVal)
-  {
-    BLDCM_setSpeed(targetCtrlVoltage);
-  }
-}
-
-
-/* Set command analog level in range 0..1023 */
-void BLDCM_setSpeed(uint32_t val)
-{ 
-  uint32_t level = val;
-  if(level > ANALOG_LEVEL_MAX)
-  {
-    level = ANALOG_LEVEL_MAX;
-  }
-  
-  if(!moovingFlag){     
-    level = 0;
-  }
-  
-  currentCmdVal = level;
-
-  /* We have an inverting switch HW, so invert the value. */
-  level = ANALOG_LEVEL_MAX - level;
-  analogWrite(PIN_CMD, level);  
-  
-}
-
 
 void BLDCM_init(void)
 {
@@ -111,11 +107,26 @@ void BLDCM_init(void)
   digitalWrite(PIN_EL, HIGH);
   
   pinMode(PIN_CMD, OUTPUT);   
-  BLDCM_setSpeed(SPEED_NONE_CMD);
+  setCurrentSpeed(0);
 
   pinMode(PIN_TAHO, INPUT);
   attachInterrupt(digitalPinToInterrupt(PIN_TAHO), handleTahoCount, RISING);
+
+  activeCmd.cmd = cmd_none;
+  activeCmd.intensity = 0;
    
+}
+
+void BLDCM_disable(void){
+  analogWrite(PIN_CMD, 0);  
+  digitalWrite(PIN_BRAKE, LOW);
+  
+  target_speed = 0;
+  stop_request_flag = false;   
+
+  pinMode(PIN_BRAKE, INPUT);
+  pinMode(PIN_CMD, INPUT);
+  
 }
 
 uint16_t BLCMD_getSpeed(void)
@@ -125,34 +136,33 @@ uint16_t BLCMD_getSpeed(void)
 
 void BLDCM_process(void)
 { 
-  user_cmd_t userRequest = SERVER_getLastReceivedCommand();
+  user_request_t userRequest = SERVER_getLastReceivedCommand();
   
-  if(userRequest != activeCmd){
+  if((userRequest.cmd != activeCmd.cmd) || (userRequest.intensity != activeCmd.intensity)){
     /* Force new command processing. */
-    executeTimestamp = 0;    
+    executeTimestamp = 0;  
   } 
   
   if(executeRefreshTimeoutReached())
   {  
-    user_cmd_t lastCmd = activeCmd;
-    activeCmd = userRequest;
+    activeCmd.cmd = userRequest.cmd;
+    activeCmd.intensity = userRequest.intensity;
     
     uint32_t level = 0;
     
-    switch(userRequest)
+    switch(userRequest.cmd)
     {
       case cmd_accelerate:
       {       
-        if(stop_request_flag)
-        {
-          stop_request_flag = false;
-          setBrake(false);    
+        if(stop_request_flag){
+          stop_request_flag = false;    
+          digitalWrite(PIN_BRAKE, LOW);   // Disable brake;            
           level = ANALOG_LEVEL_MIN;
-        }else if(currentCmdVal < ANALOG_LEVEL_MIN)
-        {
+        }else if(currentCmdVal < ANALOG_LEVEL_MIN){
           level = ANALOG_LEVEL_MIN;
-        }else
-        {
+        }else{
+          setTargetSpeed(activeCmd.intensity);
+          
           if(relativeSpeed < target_speed)
           {    
             if(((relativeSpeed * 100) / target_speed) > 80)
@@ -172,20 +182,35 @@ void BLDCM_process(void)
       case cmd_none:
       {
         stop_request_flag = false; 
-        setBrake(false);    
+        digitalWrite(PIN_BRAKE, LOW);   // Disable brake;  
       }break;
            
       case cmd_stop:
       {
-        stop_request_flag = true;  
-        BLDCM_setSpeed(0);
+        if(!stop_request_flag){
+          stop_request_flag = true;  
+          requestedBrakeIntensity = LOW_BRAKE;
+          brakeCounter = 0;
+        }else{
+          if(activeCmd.intensity < 20){
+            requestedBrakeIntensity = 5;      // Only every 5th motor hal pulse
+          }else if(activeCmd.intensity < 40){
+            requestedBrakeIntensity = 4;
+          }else if(activeCmd.intensity < 60){
+            requestedBrakeIntensity = 3;
+          }else if(activeCmd.intensity < 80){
+            requestedBrakeIntensity = 2;
+          }else{
+            requestedBrakeIntensity = 1;    // Highest brake intensity
+          } 
+        }
       }break;
 
       default:          
         break;
     }     
 
-    BLDCM_setSpeed(level); 
+    setCurrentSpeed(level); 
 
     uint32_t tahoImpulses = tahoCount - lastTahoCount;
     lastTahoCount = tahoCount;
