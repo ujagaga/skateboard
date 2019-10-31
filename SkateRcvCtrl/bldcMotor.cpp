@@ -48,7 +48,7 @@ static void setCurrentSpeed(uint32_t val)
   }
   
   if(!moovingFlag){     
-    level = 0;
+    //level = 0;
   }
   
   currentCmdVal = level;
@@ -56,7 +56,10 @@ static void setCurrentSpeed(uint32_t val)
   if(val > 0){
     digitalWrite(PIN_BRAKE, LOW);   // Disable brake;  
   }
-  analogWrite(PIN_CMD, level);    
+  analogWrite(PIN_CMD, level);   
+
+//  Serial.print("M:");
+//  Serial.println(level);
 }
 
 static void setTargetSpeed(uint8_t percent)
@@ -70,8 +73,8 @@ static void setTargetSpeed(uint8_t percent)
   /* Adjust current control voltage to value near current speed, so we do not wait long to accelerate. */
   uint32_t targetCtrlVoltage = (relativeSpeed / 10) * SPEED_TO_VOLTAGE_MULTIPLIER;
   if((targetCtrlVoltage + ACCELERATE_INCREMENT) < currentCmdVal)
-  {
-    setCurrentSpeed(targetCtrlVoltage);
+  {    
+    setCurrentSpeed(targetCtrlVoltage);    
   }
 }
 
@@ -161,6 +164,7 @@ void BLDCM_process(void)
         }else if(currentCmdVal < ANALOG_LEVEL_MIN){
           level = ANALOG_LEVEL_MIN;
         }else{
+
           setTargetSpeed(activeCmd.intensity);
           
           if(relativeSpeed < target_speed)
@@ -196,13 +200,16 @@ void BLDCM_process(void)
             requestedBrakeIntensity = 5;      // Only every 5th motor hal pulse
           }else if(activeCmd.intensity < 40){
             requestedBrakeIntensity = 4;
-          }else if(activeCmd.intensity < 60){
+          }else if(activeCmd.intensity < 65){
             requestedBrakeIntensity = 3;
-          }else if(activeCmd.intensity < 80){
+          }else if(activeCmd.intensity < 90){
             requestedBrakeIntensity = 2;
           }else{
             requestedBrakeIntensity = 1;    // Highest brake intensity
           } 
+
+//          Serial.print("B:");
+//          Serial.println(requestedBrakeIntensity);
         }
       }break;
 

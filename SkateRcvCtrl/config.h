@@ -24,7 +24,7 @@
 
 #define PIN_EL                  (D0) 
 #define PIN_TAHO                (D1) 
-#define PIN_CMD                 (D2) 
+#define PIN_CMD                 (D8)  // Do not use D2 for PWM. It is close to the oscillator and causes connection drop.
 #define PIN_BRAKE               (D6) 
 
 #define MINIMUM_SPEED_RPM       (120ul)   /* 2Rev per second => ((90mm*3.14*2)/1000)mps ~ 2kmph */

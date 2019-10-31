@@ -5,23 +5,55 @@
 #include "wifi_connection.h"
 #include "server.h"
 
+#define CC_TIMEOUT        (100u)
 
 static WebSocketsServer wsServer = WebSocketsServer(TCP_PORT);
 static user_cmd_t lastReceivedCommand = cmd_none;
 static uint8_t intensity = 0;
+static IPAddress clientAddr = IPAddress(0, 0, 0, 0);
+static volatile uint32_t clientCheckTimestamp = 0;
 
+static void chk_client_status() { 
+
+  if((millis() - clientCheckTimestamp) > CC_TIMEOUT){
+    if(wifi_softap_get_station_num() == 0){
+      if(clientAddr[0] > 0){
+        Serial.println("NC");  
+      }
+      
+      clientAddr = IPAddress(0,0,0,0);
+      lastReceivedCommand = cmd_none;
+      intensity = 0; 
+    }
+
+    clientCheckTimestamp = millis();
+  }
+}
 
 static void serverEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t len)
 { 
   switch (type) {
     case WStype_DISCONNECTED:             // the websocket is disconnected
-      lastReceivedCommand = cmd_none;
-      intensity = 0;
-      break;
-    case WStype_CONNECTED:                // a new websocket connection is established     
-      break;
+    {      
+
+    }break;
+    case WStype_CONNECTED:                // a new websocket connection is established    
+    { 
+      if(clientAddr[0] == 0){
+         clientAddr = wsServer.remoteIP(num);
+         Serial.print("Client connected from:");
+         Serial.println(clientAddr);
+      }
+    }break;
     case WStype_TEXT:                     // new text data is received
     {   
+      IPAddress ip = wsServer.remoteIP(num);
+
+      if((ip[0] != clientAddr[0]) || (ip[1] != clientAddr[1]) || (ip[2] != clientAddr[2]) || (ip[3] != clientAddr[3])){
+        //Serial.println("Not the first client connected! Refusing command.");
+        return;
+      }
+      
       if(len > 2){
         intensity = (uint8_t)atoi((char*)&payload[1]);        
       }else{
@@ -45,6 +77,11 @@ static void serverEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t le
       }else{
         lastReceivedCommand = cmd_none;
       }      
+
+//      Serial.print("CMD:");
+//      Serial.print(char(payload[0]));
+//      Serial.print(", ");
+//      Serial.println(intensity);
     }break;
   }
 }
@@ -66,4 +103,5 @@ void SERVER_init(){
 void SERVER_process() 
 {
   wsServer.loop(); 
+  chk_client_status();
 }

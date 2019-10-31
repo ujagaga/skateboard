@@ -8,7 +8,7 @@
 
 /* Initialization */
 void setup(void) {
-  delay(200);
+  delay(500);
   Serial.begin(115200); 
   Serial.println("\n\n");
 
