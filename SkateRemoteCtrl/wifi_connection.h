@@ -7,6 +7,5 @@ extern void WIFIC_init( void );
 extern void WIFIC_connectToScate( void );
 extern void WIFIC_connectToMainNetwork( void );
 extern char* WIFIC_getDeviceName( void );
-extern bool WIFIC_checkIfConnected();
 
 #endif

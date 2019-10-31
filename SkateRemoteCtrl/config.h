@@ -5,8 +5,6 @@
 
 #define AP_NAME                 "ujagaga_skate"
 #define AP_PASS                 "SkatePass123"
-#define AP_MAIN_NAME            "rada_i_slavica"
-#define AP_MAIN_PASS            "ohana130315"
 #define DEV_NAME_PREFIX         "ScateRemote"   
 #define SERVER_IP               "192.168.10.1"
 #define SERVER_PORT             (4213u)  

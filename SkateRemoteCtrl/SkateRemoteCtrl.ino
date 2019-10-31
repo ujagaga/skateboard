@@ -76,7 +76,6 @@ void setup(void) {
   
   WIFIC_init();    
   WIFIC_connectToScate();
-//  WIFIC_connectToMainNetwork();
   WS_init();
 }
 
@@ -118,11 +117,11 @@ void loop(void) {
 
   if(ledBlinkCounter > LED_BLINK_COUNT){
     ledBlinkCounter = 0;
-  }
-  
-  if(ledBlinkCounter == 0){
+  }  
+
+  if(!WS_checkIfConnected() || (ledBlinkCounter == 0)){
     digitalWrite(PIN_LED, HIGH); 
-  }else if(WIFIC_checkIfConnected()){
+  }else{
     digitalWrite(PIN_LED, LOW); 
   }
   
