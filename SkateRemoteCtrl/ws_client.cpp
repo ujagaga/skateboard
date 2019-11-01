@@ -3,26 +3,30 @@
 #include <WebSocketsClient.h>
 #include "config.h"
 
+#define BEACON_MSG        'B'
+
+
 WebSocketsClient webSocket;
-static bool connectionStatus = false;
-static volatile uint32_t noConnectionTimestamp = 0;
+static volatile uint32_t beaconTimestamp = 0;
+
 
 void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
   switch(type) {
     case WStype_DISCONNECTED:  
     {
-      connectionStatus = false; 
-      if(noConnectionTimestamp == 0){
-        noConnectionTimestamp = millis();
-      }
+      
     }break;
     case WStype_CONNECTED: 
     {
-      connectionStatus = true;
-      noConnectionTimestamp = 0;
+     
     }break;
-    case WStype_TEXT:      
-      break;
+    case WStype_TEXT:  
+    {     
+      if(payload[0] == BEACON_MSG){
+        beaconTimestamp = millis();
+        Serial.println("B");
+      }
+    }break;
     case WStype_BIN:     
       break;
   }
@@ -33,7 +37,7 @@ void WS_init(void){
   webSocket.begin(SERVER_IP, SERVER_PORT, "/");
   webSocket.onEvent(webSocketEvent);
   webSocket.setReconnectInterval(1000);
-  noConnectionTimestamp = 0;
+  beaconTimestamp = millis();
 }
 
 void WS_send(String msg){
@@ -46,14 +50,15 @@ void WS_process(void){
 
 bool WS_checkIfConnected(){
   
-  if((noConnectionTimestamp > 0) && ((millis() - noConnectionTimestamp) > CONNECTION_TIMEOUT)){
+  if((millis() - beaconTimestamp) > CONNECTION_TIMEOUT){
     // No server available. Go to sleep.
     Serial.println("SLEEP");
     digitalWrite(PIN_LED, LOW); 
+    digitalWrite(PIN_LED2, HIGH);     
     digitalWrite(PIN_ENABLE, LOW);
         
     ESP.deepSleep(0);    
   }
 
-  return connectionStatus;
+  return ((millis() - beaconTimestamp) <= BEACON_TIMEOUT);
 }
