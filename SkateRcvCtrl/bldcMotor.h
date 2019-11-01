@@ -8,6 +8,7 @@ typedef enum
   cmd_none = 0,
   cmd_accelerate,
   cmd_stop,
+  cmd_honk,
   cmd_undefined
 }user_cmd_t;
 

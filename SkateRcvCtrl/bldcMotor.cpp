@@ -10,6 +10,7 @@
 #define MIN_RELATIVE_SPEED              (2u)
 #define SPEED_TO_VOLTAGE_MULTIPLIER     (28u)
 #define LOW_BRAKE                       (255u)
+#define HONK_DURATION                   (600u)
 
 
 static volatile uint32_t halSensTimestamp = 0;
@@ -24,6 +25,20 @@ static uint32_t lastTahoCount = 0;
 static bool moovingFlag = false;
 static uint8_t requestedBrakeIntensity = 255;
 static uint8_t brakeCounter = 0;
+static volatile uint32_t honkTimestamp = 0;
+
+
+static void processHonkRequest(){ 
+
+  if(honkTimestamp > 0){
+    /* TODO: Activate honk pin here */
+
+    
+    if((millis() - honkTimestamp) > HONK_DURATION){
+      honkTimestamp = 0;
+    }
+  }
+}
 
 
 static void processStopRequest(){
@@ -211,6 +226,11 @@ void BLDCM_process(void)
 //          Serial.print("B:");
 //          Serial.println(requestedBrakeIntensity);
         }
+      }break;
+
+      case cmd_honk:
+      {
+        honkTimestamp = millis();
       }break;
 
       default:          

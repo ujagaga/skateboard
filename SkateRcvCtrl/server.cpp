@@ -83,6 +83,8 @@ static void serverEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t le
         wsServer.broadcastTXT(currVal);         
       }else if(payload[0] == 'n'){
         lastReceivedCommand = cmd_none;
+      }else if(payload[0] == 'h'){
+        lastReceivedCommand = cmd_none;
       }else if(payload[0] == 'u'){
         /* Switch to OTAA */
         lastReceivedCommand = cmd_none;
