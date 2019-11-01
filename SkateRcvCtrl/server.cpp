@@ -5,13 +5,16 @@
 #include "wifi_connection.h"
 #include "server.h"
 
-#define CC_TIMEOUT        (100u)
+#define CC_TIMEOUT        (200u)
+#define BEACON_TIMEOUT    (300u)
+
 
 static WebSocketsServer wsServer = WebSocketsServer(TCP_PORT);
 static user_cmd_t lastReceivedCommand = cmd_none;
 static uint8_t intensity = 0;
 static IPAddress clientAddr = IPAddress(0, 0, 0, 0);
 static volatile uint32_t clientCheckTimestamp = 0;
+static volatile uint32_t beakonTimestamp = 0;
 
 static void chk_client_status() { 
 
@@ -27,6 +30,17 @@ static void chk_client_status() {
     }
 
     clientCheckTimestamp = millis();
+  }
+}
+
+/* Sends a beacon at regular intervals as lifesign.
+ *  Default WiFi implementation works but the station only detects connection loss after 5 seconds or more.
+ *  We need this to be faster.
+ */
+static void processBeacon(){
+  if((millis() - beakonTimestamp) > BEACON_TIMEOUT){
+     wsServer.broadcastTXT("B");
+     beakonTimestamp = millis();
   }
 }
 
