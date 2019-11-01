@@ -118,4 +118,5 @@ void SERVER_process()
 {
   wsServer.loop(); 
   chk_client_status();
+  processBeacon();
 }

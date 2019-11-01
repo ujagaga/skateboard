@@ -8,10 +8,6 @@ IPAddress apIP(192, 168, 10, 1);
 
 void WIFIC_init_AP(void){   
     String wifi_statusMessage;
-
-    //WiFi.disconnect(true);
-    //ESP.reset();
-    //delay(1000);
     
     Serial.println("\nStarting AP");  
     WiFi.mode(WIFI_AP);  
