@@ -3,8 +3,6 @@
 #include <WebSocketsClient.h>
 #include "config.h"
 
-#define BEACON_MSG        'B'
-
 
 WebSocketsClient webSocket;
 static volatile uint32_t beaconTimestamp = 0;
@@ -24,7 +22,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
     {     
       if(payload[0] == BEACON_MSG){
         beaconTimestamp = millis();
-        Serial.println("B");
+        //Serial.println("B");
       }
     }break;
     case WStype_BIN:     
@@ -36,7 +34,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
 void WS_init(void){
   webSocket.begin(SERVER_IP, SERVER_PORT, "/");
   webSocket.onEvent(webSocketEvent);
-  webSocket.setReconnectInterval(1000);
+  webSocket.setReconnectInterval(700);
   beaconTimestamp = millis();
 }
 

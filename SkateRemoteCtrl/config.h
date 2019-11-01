@@ -9,8 +9,9 @@
 #define SERVER_IP               "192.168.10.1"
 #define SERVER_PORT             (4213u)  
 #define CMD_TIMEOUT             (150u)
-#define CONNECTION_TIMEOUT      (10000u)
+#define CONNECTION_TIMEOUT      (15000u)
 #define BEACON_TIMEOUT          (600u)
+#define BEACON_MSG              'B'
 
 
 /* ESP-01 pin defines */
