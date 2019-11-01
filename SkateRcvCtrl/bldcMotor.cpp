@@ -31,12 +31,13 @@ static volatile uint32_t honkTimestamp = 0;
 static void processHonkRequest(){ 
 
   if(honkTimestamp > 0){
-    /* TODO: Activate honk pin here */
-
+    digitalWrite(PIN_HONK, HIGH); 
     
     if((millis() - honkTimestamp) > HONK_DURATION){
       honkTimestamp = 0;
     }
+  }else{
+    digitalWrite(PIN_HONK, LOW); 
   }
 }
 
@@ -120,6 +121,9 @@ void BLDCM_init(void)
 
   pinMode(PIN_BRAKE, OUTPUT);
   digitalWrite(PIN_BRAKE, LOW); 
+
+  pinMode(PIN_HONK, OUTPUT);
+  digitalWrite(PIN_HONK, LOW); 
   
   pinMode(PIN_EL, OUTPUT);
   digitalWrite(PIN_EL, HIGH);
