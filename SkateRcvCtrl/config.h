@@ -11,7 +11,7 @@
 #define D5    14
 #define D6    12
 #define D7    13
-#define D8    15
+#define D8    15  // Do not use. ESP12 connected to GND.
 
 /* This devices hotsopt credentials */
 #define AP_NAME                 "ujagaga_skate"
@@ -22,11 +22,11 @@
 #define EXEC_REFRESH_TIMEOUT    (100u)
 #define OTAA_UPDATE_TIMEOUT     (10000u)
 
-#define PIN_EL                  (D0) 
+#define PIN_EL                  (D5) 
 #define PIN_TAHO                (D1) 
-#define PIN_CMD                 (D8)  // Do not use D2 for PWM. It is close to the oscillator and causes connection drop.
+#define PIN_CMD                 (D0)  // Do not use D2 for PWM. It is close to the oscillator and causes connection drop.
 #define PIN_BRAKE               (D6) 
-#define PIN_HONK                (D5)
+#define PIN_HONK                (D7)
 
 #define MINIMUM_SPEED_RPM       (120ul)   /* 2Rev per second => ((90mm*3.14*2)/1000)mps ~ 2kmph */
 #define HAL_TICKS_PER_REV       (40)    /* hal ticks per revolution */

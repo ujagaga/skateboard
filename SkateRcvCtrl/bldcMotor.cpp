@@ -72,10 +72,15 @@ static void setCurrentSpeed(uint32_t val)
   if(val > 0){
     digitalWrite(PIN_BRAKE, LOW);   // Disable brake;  
   }
-  analogWrite(PIN_CMD, level);   
+  analogWrite(PIN_CMD, level);  
+//  if(level > 0){
+//     digitalWrite(PIN_CMD, HIGH);
+//  }else{
+//    digitalWrite(PIN_CMD, LOW);
+//  }
 
-//  Serial.print("M:");
-//  Serial.println(level);
+  Serial.print("M:");
+  Serial.println(level);
 }
 
 static void setTargetSpeed(uint8_t percent)
@@ -86,12 +91,13 @@ static void setTargetSpeed(uint8_t percent)
 
   target_speed = (SPEED_LIMIT * percent)/10;  
 
-  /* Adjust current control voltage to value near current speed, so we do not wait long to accelerate. */
-  uint32_t targetCtrlVoltage = (relativeSpeed / 10) * SPEED_TO_VOLTAGE_MULTIPLIER;
-  if((targetCtrlVoltage + ACCELERATE_INCREMENT) < currentCmdVal)
-  {    
-    setCurrentSpeed(targetCtrlVoltage);    
-  }
+//  /* Adjust current control voltage to value near current speed, so we do not wait long to accelerate. */
+//  uint32_t targetCtrlVoltage = (relativeSpeed / 10) * SPEED_TO_VOLTAGE_MULTIPLIER;
+//  if((targetCtrlVoltage + ACCELERATE_INCREMENT) < currentCmdVal)
+//  {    
+//    Serial.println("******");
+//    setCurrentSpeed(targetCtrlVoltage);    
+//  }
 }
 
 static bool executeRefreshTimeoutReached(void)
@@ -100,7 +106,7 @@ static bool executeRefreshTimeoutReached(void)
 }
 
 
-void handleTahoCount() 
+ICACHE_RAM_ATTR void handleTahoCount() 
 {   
   uint32_t lastHalSensorTickTimespan = micros() - halSensTimestamp;
   halSensTimestamp = micros(); 
@@ -176,6 +182,7 @@ void BLDCM_process(void)
     {
       case cmd_accelerate:
       {       
+        Serial.print("A");
         if(stop_request_flag){
           stop_request_flag = false;    
           digitalWrite(PIN_BRAKE, LOW);   // Disable brake;            
@@ -183,20 +190,24 @@ void BLDCM_process(void)
         }else if(currentCmdVal < ANALOG_LEVEL_MIN){
           level = ANALOG_LEVEL_MIN;
         }else{
-
+         // Serial.print("3 ");
           setTargetSpeed(activeCmd.intensity);
           
           if(relativeSpeed < target_speed)
           {    
+            //Serial.println("1 ");
             if(((relativeSpeed * 100) / target_speed) > 80)
             {  /* Getting close to target. Slow down acceleration pace. */
-               level = currentCmdVal + (ACCELERATE_INCREMENT / 2);        
+              //Serial.println("2");
+               level = currentCmdVal + (ACCELERATE_INCREMENT / 2);    
             }else
             {
+              //Serial.println("3");
               level = currentCmdVal + ACCELERATE_INCREMENT;
             }
           }else
-          {           
+          {      
+           // Serial.println("2 ");     
             level = currentCmdVal - ACCELERATE_INCREMENT;
           }
         }        
@@ -204,6 +215,7 @@ void BLDCM_process(void)
 
       case cmd_none:
       {
+//        Serial.println("N"); 
         stop_request_flag = false; 
         digitalWrite(PIN_BRAKE, LOW);   // Disable brake;  
       }break;
@@ -241,6 +253,8 @@ void BLDCM_process(void)
         break;
     }     
 
+//    Serial.print("L:");
+//    Serial.println(level);
     setCurrentSpeed(level); 
 
     uint32_t tahoImpulses = tahoCount - lastTahoCount;
