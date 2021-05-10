@@ -17,5 +17,6 @@ extern void BLDCM_process(void);
 extern uint16_t BLCMD_getSpeed(void);
 extern uint32_t BLCMD_getCmdVoltage();
 extern void BLDCM_disable(void);
+extern void BLCMD_SetHonkTime(void);
 
 #endif

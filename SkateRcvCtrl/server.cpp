@@ -74,22 +74,23 @@ static void serverEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t le
         intensity = 100;        
       }
       
-      if (payload[0] == 'a') {           
-        lastReceivedCommand = cmd_accelerate;  
+      if (payload[0] == 'a') {
+        lastReceivedCommand = cmd_accelerate;
       }else if(payload[0] == 's'){
         lastReceivedCommand = cmd_stop;
       }else if(payload[0] == 'm'){
         String currVal = String("S:" + String(BLCMD_getSpeed()) + " V:" + String(BLCMD_getCmdVoltage()));
-        wsServer.broadcastTXT(currVal);         
+        wsServer.broadcastTXT(currVal);
       }else if(payload[0] == 'n'){
         lastReceivedCommand = cmd_none;
       }else if(payload[0] == 'h'){
+        BLCMD_SetHonkTime();
         lastReceivedCommand = cmd_none;
       }else if(payload[0] == 'u'){
         /* Switch to OTAA */
         lastReceivedCommand = cmd_none;
         BLDCM_disable();
-        OTA_init(); 
+        OTA_init();
       }else{
         lastReceivedCommand = cmd_none;
       }      

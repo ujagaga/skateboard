@@ -117,6 +117,10 @@ ICACHE_RAM_ATTR void handleTahoCount()
   }
 }
 
+void BLCMD_SetHonkTime(void)
+{
+  honkTimestamp = millis();
+}
 uint32_t BLCMD_getCmdVoltage()
 {
   return currentCmdVal;
@@ -242,11 +246,6 @@ void BLDCM_process(void)
 //          Serial.print("B:");
 //          Serial.println(requestedBrakeIntensity);
         }
-      }break;
-
-      case cmd_honk:
-      {
-        honkTimestamp = millis();
       }break;
 
       default:          
