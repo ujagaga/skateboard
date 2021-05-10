@@ -27,17 +27,18 @@ static uint8_t requestedBrakeIntensity = 255;
 static uint8_t brakeCounter = 0;
 static volatile uint32_t honkTimestamp = 0;
 
-
+/* Honk logic is inverted to avoid long startup beep because the bootloader keeps pin 13 HIGH at startup
+*/
 static void processHonkRequest(){ 
 
   if(honkTimestamp > 0){
-    digitalWrite(PIN_HONK, HIGH); 
+    digitalWrite(PIN_HONK, LOW); 
     
     if((millis() - honkTimestamp) > HONK_DURATION){
       honkTimestamp = 0;
     }
   }else{
-    digitalWrite(PIN_HONK, LOW); 
+    digitalWrite(PIN_HONK, HIGH); 
   }
 }
 
@@ -133,7 +134,7 @@ void BLDCM_init(void)
   digitalWrite(PIN_BRAKE, LOW); 
 
   pinMode(PIN_HONK, OUTPUT);
-  digitalWrite(PIN_HONK, LOW); 
+  digitalWrite(PIN_HONK, HIGH); 
   
   pinMode(PIN_EL, OUTPUT);
   digitalWrite(PIN_EL, HIGH);
