@@ -85,6 +85,7 @@ static void serverEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t le
         lastReceivedCommand = cmd_none;
       }else if(payload[0] == 'h'){
         BLCMD_SetHonkTime();
+        Serial.println("H");
         lastReceivedCommand = cmd_none;
       }else if(payload[0] == 'u'){
         /* Switch to OTAA */

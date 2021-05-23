@@ -10,7 +10,7 @@
 #define MIN_RELATIVE_SPEED              (2u)
 #define SPEED_TO_VOLTAGE_MULTIPLIER     (28u)
 #define LOW_BRAKE                       (255u)
-#define HONK_DURATION                   (600u)
+#define HONK_DURATION                   (900ul)
 
 
 static volatile uint32_t halSensTimestamp = 0;
@@ -31,11 +31,17 @@ static volatile uint32_t honkTimestamp = 0;
 */
 static void processHonkRequest(){ 
 
+  uint32_t ts = millis();
+  
   if(honkTimestamp > 0){
     digitalWrite(PIN_HONK, LOW); 
     
-    if((millis() - honkTimestamp) > HONK_DURATION){
+    if((ts - honkTimestamp) > HONK_DURATION){
       honkTimestamp = 0;
+    }else if((ts - honkTimestamp) > (HONK_DURATION / 3)){
+      digitalWrite(PIN_HONK, HIGH); 
+    }else if((ts - honkTimestamp) > (2 * HONK_DURATION / 3)){
+      digitalWrite(PIN_HONK, LOW); 
     }
   }else{
     digitalWrite(PIN_HONK, HIGH); 
@@ -169,6 +175,8 @@ uint16_t BLCMD_getSpeed(void)
 
 void BLDCM_process(void)
 { 
+  processHonkRequest();
+  
   user_request_t userRequest = SERVER_getLastReceivedCommand();
   
   if((userRequest.cmd != activeCmd.cmd) || (userRequest.intensity != activeCmd.intensity)){
@@ -244,7 +252,7 @@ void BLDCM_process(void)
             requestedBrakeIntensity = 1;    // Highest brake intensity
           } 
 
-//          Serial.print("B:");
+          Serial.print("B:");
 //          Serial.println(requestedBrakeIntensity);
         }
       }break;
