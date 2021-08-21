@@ -4,6 +4,7 @@
 #include "bldcMotor.h"
 #include "config.h"
 #include "ota.h"
+#include "peripherals.h"
 
 
 /* Initialization */
@@ -15,6 +16,7 @@ void setup(void) {
   WIFIC_init_AP();
   SERVER_init(); 
   BLDCM_init();
+  PERIPHERALS_init();
 }
 
 /* Main infinite while loop */
@@ -24,5 +26,6 @@ void loop(void) {
   }else{
     SERVER_process();  
     BLDCM_process();
+    PERIPHERALS_process();
   }
 }

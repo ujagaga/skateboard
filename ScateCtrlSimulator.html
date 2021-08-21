@@ -23,7 +23,6 @@
 		}
 		
 		#acc{ background: green; }
-		#cruise{ background: lightyellow; }	
 		#stop{ background: red; }
 		#honk{ 
 			background: blue; 
@@ -33,7 +32,7 @@
 			border-radius: 50%;
 		}
 		
-		.ctrl:hover, #acc:hover, #cruise:hover, #stop:hover, #honk:hover{
+		.ctrl:hover, #acc:hover, #stop:hover, #honk:hover{
 		  background-color: #CCC;
 		  cursor: pointer;
 		}
@@ -59,7 +58,6 @@
 <body>
  
 	<div class="ctrl" id="acc" ><h1>Accelerate</h1></div>
-	<div class="ctrl" id="cruise" ><h1>Cruise</h1></div>
 	<div class="ctrl" id="stop" ><h1>Stop</h1></div> 
 	<div class="ctrl" id="honk" ><h1>Honk</h1></div>
 	<p id="curr" ></p>
@@ -71,7 +69,6 @@
 		var url = 'ws://192.168.10.1:4213';
 		var itemAcc = document.querySelector("#acc");
 		var itemStop = document.querySelector("#stop");
-		var itemCruise = document.querySelector("#cruise");
 		var itemHonk = document.querySelector("#honk");
 		var statusMsg = document.querySelector("#statMsg");
 		var curr = document.querySelector("#curr");
@@ -88,7 +85,9 @@
 			statusMsg.innerHTML = "No connection!";
 		};
 		cn.onmessage = function(event) {
-			curr.innerHTML = event.data;
+			if(event.data != 'B'){
+				curr.innerHTML = event.data;
+			}			
 		};
 		
 		function send(c){  
@@ -108,12 +107,6 @@
 		itemStop.addEventListener("mouseleave", function(){send('n');}, false);
 		itemStop.addEventListener("touchstart", function(){send('s');}, false);
 		itemStop.addEventListener("touchend", function(){send('n');}, false);
-		
-		itemCruise.addEventListener("mousedown", function(){send('c');}, false);
-		itemCruise.addEventListener("mouseup", function(){send('n');}, false);
-		itemCruise.addEventListener("mouseleave", function(){send('n');}, false);
-		itemCruise.addEventListener("touchstart", function(){send('c');}, false);
-		itemCruise.addEventListener("touchend", function(){send('n');}, false);
 		
 		itemHonk.addEventListener("mousedown", function(){send('h');}, false);
 		itemHonk.addEventListener("mouseup", function(){send('n');}, false);

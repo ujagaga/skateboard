@@ -15,8 +15,8 @@ typedef enum
 extern void BLDCM_init(void);
 extern void BLDCM_process(void);
 extern uint16_t BLCMD_getSpeed(void);
-extern uint32_t BLCMD_getCmdVoltage();
 extern void BLDCM_disable(void);
 extern void BLCMD_SetHonkTime(void);
+extern void BLCMD_clientConnectionSet(bool state);
 
 #endif

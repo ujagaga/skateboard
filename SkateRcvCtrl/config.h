@@ -22,16 +22,13 @@
 #define EXEC_REFRESH_TIMEOUT    (100u)
 #define OTAA_UPDATE_TIMEOUT     (10000u)
 
-#define PIN_EL                  (D5) 
-#define PIN_TAHO                (D1) 
-#define PIN_CMD                 (D0)  // Do not use D2 for PWM. It is close to the oscillator and causes connection drop.
-#define PIN_BRAKE               (D6) 
-#define PIN_HONK                (D7)
-
-#define MINIMUM_SPEED_RPM       (120ul)   /* 2Rev per second => ((90mm*3.14*2)/1000)mps ~ 2kmph */
-#define HAL_TICKS_PER_REV       (40)    /* hal ticks per revolution */
+#define PIN_CMD                 (5)  // Do not use D2 for PWM. It is close to the oscillator and causes connection drop.
+#define PIN_BRAKE               (14) 
+#define PIN_HONK                (4)
+#define PIN_FRONT_LIGHT         (12)
+#define PIN_REAR_LIGHT          (13)
 
 #define ACCELERATE_INCREMENT    (10)   
-#define SPEED_LIMIT             (25u)   // kmph
+#define SPEED_LIMIT             (1023)  
     
 #endif
