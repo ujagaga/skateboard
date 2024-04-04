@@ -16,7 +16,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
     }break;
     case WStype_CONNECTED: 
     {
-     
+      Serial.println("Connected...");
     }break;
     case WStype_TEXT:  
     {     
@@ -39,6 +39,7 @@ void WS_init(void){
 }
 
 void WS_send(String msg){
+  Serial.println(msg);
   webSocket.sendTXT(msg);
 }
 

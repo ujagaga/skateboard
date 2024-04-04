@@ -2,53 +2,30 @@
 #include "wifi_connection.h"
 #include "ws_client.h"
 
-#define THREASHOLD        (5u)
+#define THREASHOLD        (100u)
 #define CMD_READ_INTERVAL (200u)
 #define LED_BLINK_COUNT   (9u)
 
+#define POT_LOW           (0)
+#define POT_MID           (1)
+#define POT_HIGH          (2)
+
 static String lastCmd = "";
-static bool fwdCmd = false;
 static volatile uint32_t readTimestamp = 0;
 static uint8_t ledBlinkCounter = 0;
-static int calibrateValue = 508;
-static int totalEstimatedVcc = 800; // This is re-calibrated at every start to account for battery drain
+static int calibrateValue = 500;
 static bool honkPressedFlag = false;
 
-uint8_t readCmd(){
-  uint8_t percentage;
-  
+uint8_t readCmd(){ 
   int32_t sensorValue = analogRead(PIN_ANALOG);
 
-  if(totalEstimatedVcc < sensorValue){
-    totalEstimatedVcc = sensorValue;
-    Serial.println(totalEstimatedVcc);
+  if(sensorValue < (calibrateValue - THREASHOLD)){
+    return POT_LOW;
+  }else if(sensorValue > (calibrateValue + THREASHOLD)){
+    return POT_HIGH;
   }
-  
-  int fullRangeValue;  
-  
-  if(sensorValue > calibrateValue){
-    fwdCmd = false;
-    sensorValue -= calibrateValue;
-    fullRangeValue = totalEstimatedVcc - calibrateValue; 
-  }else{
-    fwdCmd = true;
-    sensorValue = calibrateValue - sensorValue;
-    fullRangeValue = calibrateValue;
-  }
-
-  fullRangeValue -= 4; // Just to make sure we get 100 % when joystick position is maxed. 
-
-  if(sensorValue < THREASHOLD){
-    percentage = 0;
-  }else{
-    percentage = (sensorValue * 100) / fullRangeValue;
-
-    if(percentage > 100){
-      percentage = 100;
-    }
-  }  
-  
-  return percentage;
+    
+  return POT_MID;   
 }
 
 
@@ -91,24 +68,14 @@ void loop(void) {
   if((millis() - readTimestamp) > CMD_READ_INTERVAL){    
     uint8_t cmdVal = readCmd();
   
-    String cmd;
+    String cmd = CMD_NONE;
 
-    if(cmdVal == 0){
-      cmd = CMD_NONE;
-    }else if(fwdCmd){
-      cmd = CMD_ACCEL;
-    }else{
+    if(cmdVal == POT_HIGH){
+      cmd = CMD_ACCEL + String("100");
+    }else if(cmdVal == POT_LOW){
       cmd = CMD_STOP;
-    }
-
-    if(cmdVal < 10){
-      cmd += "00";
-    }else if(cmdVal < 100){
-      cmd += "0";
-    }
+    }    
     
-    cmd += String(cmdVal);
-
     if(!lastCmd.equals(cmd)){  
       WS_send(cmd);  
       lastCmd = cmd;
