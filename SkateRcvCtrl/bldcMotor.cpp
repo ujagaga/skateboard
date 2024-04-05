@@ -136,6 +136,8 @@ void BLDCM_process(void)
       {
         stop_request_flag = false; 
         brakeIntensity = 0;
+        currentSpeed = 0;
+        target_speed = 0;
         analogWrite(PIN_BRAKE, brakeIntensity); 
       }break;
            
