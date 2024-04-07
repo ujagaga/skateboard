@@ -9,7 +9,7 @@
 #define POT_LOW           (0)
 #define POT_MID           (1)
 #define POT_HIGH          (2)
-#define REPEAT_CMD_COUNT  (8)
+#define REPEAT_CMD_COUNT  (4)
 
 static String lastCmd = "";
 static volatile uint32_t readTimestamp = 0;
@@ -78,17 +78,17 @@ void loop(void) {
       cmd = CMD_STOP;
     }    
     
-    if(!lastCmd.equals(cmd)){  
-      WS_send(cmd);  
-      lastCmd = cmd;
-      cmdCounter = 0;
-    }else{
+    if(lastCmd.equals(cmd)){  
       cmdCounter++;
       if(cmdCounter > REPEAT_CMD_COUNT){
         cmdCounter = 0;
         WS_send(cmd);
       }
-    }  
+    }else{
+      WS_send(cmd);  
+      lastCmd = cmd;
+      cmdCounter = 0;
+    }
     
     readTimestamp = millis();
     ledBlinkCounter++;    

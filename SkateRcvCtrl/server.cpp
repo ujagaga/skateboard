@@ -7,7 +7,7 @@
 #include "server.h"
 #include "peripherals.h"
 
-#define CC_TIMEOUT        (1000u)
+#define CC_TIMEOUT        (1200u)
 #define BEACON_TIMEOUT    (300u)
 
 /* Generate the index page as a raw string */
@@ -81,6 +81,7 @@ static volatile uint32_t beakonTimestamp = 0;
 static void chkClientStatus() {
   if((millis() - clientCheckTimestamp) > CC_TIMEOUT){
     lastReceivedCommand = cmd_none;
+    Serial.println("n");
   }
 }
 
@@ -101,12 +102,12 @@ static void serverEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t le
     case WStype_DISCONNECTED:             // the websocket is disconnected
     {      
       if(num == 0){
-        lastReceivedCommand = cmd_none;
+        lastReceivedCommand = cmd_none;        
       }
     }break;
     case WStype_CONNECTED:                // a new websocket connection is established    
     { 
-      
+
     }break;
     case WStype_TEXT:                     // new text data is received
     { 
@@ -132,7 +133,7 @@ static void serverEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t le
 
         wsServer.broadcastTXT(currVal);
       }else if(payload[0] == 'n'){
-        lastReceivedCommand = cmd_none;
+        lastReceivedCommand = cmd_none;        
       }else if(payload[0] == 'h'){
         PERIPHERALS_honk();
         lastReceivedCommand = cmd_none;
@@ -152,7 +153,7 @@ user_request_t SERVER_getLastReceivedCommand(void){
   user_request_t retVal;
 
   retVal.cmd = lastReceivedCommand;
-  retVal.intensity = intensity;
+  retVal.intensity = intensity;  
   
   return retVal;
 }
