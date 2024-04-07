@@ -2,11 +2,8 @@
 #include "bldcMotor.h"
 #include "server.h"
 
-#define MIN_SPEED                         (60u)
-
-// Input voltage is 2,5V - 5V
-#define MIN_BRAKE_LEVEL                 (600)   
-#define MAX_BRAKE_LEVEL                 (1023u)   
+#define MIN_SPEED                    (60u)
+#define BRAKE_LEVEL                 (1023)   
 
 
 static uint32_t executeTimestamp = 0;
@@ -14,23 +11,15 @@ static user_request_t activeCmd;
 static uint16_t currentSpeed = 0;
 static bool stop_request_flag = false;
 static uint32_t target_speed = 0;
-static uint8_t brakeIntensity = 0;
 
 
 static void processStopRequest(){
-  if(brakeIntensity < MIN_BRAKE_LEVEL){
-    brakeIntensity = MIN_BRAKE_LEVEL;   
-  }
-
-  if(brakeIntensity < MAX_BRAKE_LEVEL){
-    brakeIntensity += 10;
-  }
 #ifdef REVERSE_SPEED_POLARITY
   analogWrite(PIN_CMD, 1024);
 #else
   analogWrite(PIN_CMD, 0);
 #endif  
-  analogWrite(PIN_BRAKE, brakeIntensity); 
+  analogWrite(PIN_BRAKE, BRAKE_LEVEL); 
 }
 
 
@@ -41,8 +30,7 @@ static void setCurrentSpeed()
   }
   
   if(currentSpeed > 0){
-    brakeIntensity = 0;
-    analogWrite(PIN_BRAKE, brakeIntensity);    // Disable brake;  
+    analogWrite(PIN_BRAKE, 0);    // Disable brake;  
   }
 #ifdef REVERSE_SPEED_POLARITY
   analogWrite(PIN_CMD, 1024 - currentSpeed);
@@ -123,8 +111,7 @@ void BLDCM_process(void)
         
         if(stop_request_flag){
           stop_request_flag = false;    
-          brakeIntensity = 0;
-          analogWrite(PIN_BRAKE, brakeIntensity);   
+          analogWrite(PIN_BRAKE, 0);   
                    
           currentSpeed = MIN_SPEED;
         }else if(currentSpeed < MIN_SPEED){
@@ -151,10 +138,9 @@ void BLDCM_process(void)
       case cmd_none:
       {
         stop_request_flag = false; 
-        brakeIntensity = 0;
         currentSpeed = 0;
         target_speed = 0;
-        analogWrite(PIN_BRAKE, brakeIntensity); 
+        analogWrite(PIN_BRAKE, 0); 
       }break;
            
       case cmd_stop:

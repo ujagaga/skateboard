@@ -37,14 +37,15 @@ void PERIPHERALS_process(void){
     // Process honk
     uint32 t_HDelta = ts - honkTimestamp;
     if(honkTimestamp > 0){
-        digitalWrite(PIN_HONK, HIGH); 
-
         if(t_HDelta > HONK_DURATION){
-            honkTimestamp = 0;
-        }else if(t_HDelta > (HONK_DURATION / 3)){
-            digitalWrite(PIN_HONK, LOW); 
+          honkTimestamp = 0;
+          digitalWrite(PIN_HONK, LOW); 
         }else if(t_HDelta > (2 * HONK_DURATION / 3)){
-            digitalWrite(PIN_HONK, HIGH); 
+          digitalWrite(PIN_HONK, HIGH); 
+        }else if(t_HDelta > (HONK_DURATION / 3)){
+          digitalWrite(PIN_HONK, LOW); 
+        }else{
+          digitalWrite(PIN_HONK, HIGH); 
         }
     }else{
         digitalWrite(PIN_HONK, LOW); 
