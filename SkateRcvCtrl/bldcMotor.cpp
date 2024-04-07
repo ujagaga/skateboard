@@ -5,7 +5,7 @@
 #define MIN_SPEED                         (60u)
 
 // Input voltage is 2,5V - 5V
-#define MIN_BRAKE_LEVEL                 (700u)   
+#define MIN_BRAKE_LEVEL                 (600)   
 #define MAX_BRAKE_LEVEL                 (1023u)   
 
 
@@ -130,7 +130,6 @@ void BLDCM_process(void)
         }else if(currentSpeed < MIN_SPEED){
           currentSpeed = MIN_SPEED;
         }else{
-         // Serial.print("3 ");
           setTargetSpeed(activeCmd.intensity);
           
           if(currentSpeed < target_speed)

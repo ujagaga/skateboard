@@ -6,7 +6,7 @@
 #include "server.h"
 #include "peripherals.h"
 
-#define CC_TIMEOUT        (1200u)
+#define CC_TIMEOUT        (500u)
 #define BEACON_TIMEOUT    (300u)
 
 /* Generate the index page as a raw string */
@@ -64,7 +64,7 @@ itemHonk.addEventListener("mouseleave",function(){send('n');},false);
 itemHonk.addEventListener("touchstart",function(){send('h');},false);
 itemHonk.addEventListener("touchend",function(){send('n');},false);
 
-var stats=setInterval(statusTimer,500);
+var stats=setInterval(statusTimer,200);
 function statusTimer(){send('m');}
 </script></body></html>
 )=====";
@@ -80,7 +80,6 @@ static volatile uint32_t beakonTimestamp = 0;
 static void chkClientStatus() {
   if((millis() - clientCheckTimestamp) > CC_TIMEOUT){
     lastReceivedCommand = cmd_none;
-    Serial.println("n");
   }
 }
 

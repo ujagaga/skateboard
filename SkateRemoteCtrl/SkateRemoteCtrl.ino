@@ -9,14 +9,11 @@
 #define POT_LOW           (0)
 #define POT_MID           (1)
 #define POT_HIGH          (2)
-#define REPEAT_CMD_COUNT  (4)
 
-static String lastCmd = "";
 static volatile uint32_t readTimestamp = 0;
 static uint8_t ledBlinkCounter = 0;
 static int calibrateValue = 500;
 static bool honkPressedFlag = false;
-static uint8_t cmdCounter = 0;
 
 uint8_t readCmd(){ 
   int32_t sensorValue = analogRead(PIN_ANALOG);
@@ -78,17 +75,7 @@ void loop(void) {
       cmd = CMD_STOP;
     }    
     
-    if(lastCmd.equals(cmd)){  
-      cmdCounter++;
-      if(cmdCounter > REPEAT_CMD_COUNT){
-        cmdCounter = 0;
-        WS_send(cmd);
-      }
-    }else{
-      WS_send(cmd);  
-      lastCmd = cmd;
-      cmdCounter = 0;
-    }
+    WS_send(cmd);       
     
     readTimestamp = millis();
     ledBlinkCounter++;    
