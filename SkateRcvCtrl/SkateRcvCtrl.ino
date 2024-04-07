@@ -1,9 +1,7 @@
 #include "server.h"
 #include "wifi_connection.h"
-#include "ota.h"
 #include "bldcMotor.h"
 #include "config.h"
-#include "ota.h"
 #include "peripherals.h"
 
 
@@ -21,11 +19,7 @@ void setup(void) {
 
 /* Main infinite while loop */
 void loop(void) {     
-  if(OTA_updateInProgress()){ 
-    OTA_process(); 
-  }else{
-    SERVER_process();  
-    BLDCM_process();
-    PERIPHERALS_process();
-  }
+  SERVER_process();  
+  BLDCM_process();
+  PERIPHERALS_process();
 }

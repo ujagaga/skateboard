@@ -2,7 +2,6 @@
 #include <WebSocketsServer.h>
 #include <ESP8266WebServer.h>
 #include "bldcMotor.h"
-#include "ota.h"
 #include "wifi_connection.h"
 #include "server.h"
 #include "peripherals.h"
@@ -137,11 +136,6 @@ static void serverEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t le
       }else if(payload[0] == 'h'){
         PERIPHERALS_honk();
         lastReceivedCommand = cmd_none;
-      }else if(payload[0] == 'u'){
-        /* Switch to OTAA */
-        lastReceivedCommand = cmd_none;
-        BLDCM_disable();
-        OTA_init();
       }else{
         lastReceivedCommand = cmd_none;
       }      

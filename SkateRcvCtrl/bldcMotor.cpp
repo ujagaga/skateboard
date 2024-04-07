@@ -25,7 +25,11 @@ static void processStopRequest(){
   if(brakeIntensity < MAX_BRAKE_LEVEL){
     brakeIntensity += 10;
   }
-  analogWrite(PIN_CMD, 0);  
+#ifdef REVERSE_SPEED_POLARITY
+  analogWrite(PIN_CMD, 1024);
+#else
+  analogWrite(PIN_CMD, 0);
+#endif  
   analogWrite(PIN_BRAKE, brakeIntensity); 
 }
 
@@ -40,7 +44,12 @@ static void setCurrentSpeed()
     brakeIntensity = 0;
     analogWrite(PIN_BRAKE, brakeIntensity);    // Disable brake;  
   }
-  analogWrite(PIN_CMD, currentSpeed);   
+#ifdef REVERSE_SPEED_POLARITY
+  analogWrite(PIN_CMD, 1024 - currentSpeed);
+#else
+  analogWrite(PIN_CMD, currentSpeed);  
+#endif 
+   
 
  // Serial.println(currentSpeed);
 }
@@ -64,7 +73,11 @@ void BLDCM_init(void)
   digitalWrite(PIN_BRAKE, LOW); 
    
   pinMode(PIN_CMD, OUTPUT);   
-  analogWrite(PIN_CMD, 0);  
+#ifdef REVERSE_SPEED_POLARITY
+  analogWrite(PIN_CMD, 1024);
+#else
+  analogWrite(PIN_CMD, 0);
+#endif 
 
   activeCmd.cmd = cmd_none;
   activeCmd.intensity = 0;
@@ -72,7 +85,11 @@ void BLDCM_init(void)
 }
 
 void BLDCM_disable(void){
-  analogWrite(PIN_CMD, 0);  
+#ifdef REVERSE_SPEED_POLARITY
+  analogWrite(PIN_CMD, 1024);
+#else
+  analogWrite(PIN_CMD, 0);
+#endif   
   analogWrite(PIN_BRAKE, 0);
   
   target_speed = 0;

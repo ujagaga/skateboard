@@ -20,7 +20,6 @@
 #define TCP_PORT                (4213u)  
 #define CMD_TIMEOUT             (350u)
 #define EXEC_REFRESH_TIMEOUT    (100u)
-#define OTAA_UPDATE_TIMEOUT     (10000u)
 
 #define PIN_CMD                 (5)  // Do not use D2 for PWM. It is close to the oscillator and causes connection drop.
 #define PIN_BRAKE               (14) 
@@ -30,5 +29,6 @@
 
 #define ACCELERATE_INCREMENT    (10)   
 #define SPEED_LIMIT             (1023)  
+// #define REVERSE_SPEED_POLARITY
     
 #endif
