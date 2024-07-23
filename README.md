@@ -1,25 +1,27 @@
-# skateboard
+# DIY Electric Skateboard With Hoverboard Wheels
 
-This is the setup of my DIY skateboard. It features one brushless motor whell drive and 3 passive wheels. 
-The driver is from AliExpress, "BLDC 3 Phase 400W DC Hall Brushless Motor Controller PWM Hall Motor Control Driver Board With Forward/Reverse/Brake DC 6V-60V":
+This is the 3D model for my DIY electric skateboard. It features two howerboard motor whells and 2 passive wheels. 
+The driver is from AliExpress, "36V Brushless Dual Motor Electric Skateboard Controller with remote controller":
 
-https://www.aliexpress.com/item/1005002287420689.html?spm=a2g0o.order_list.order_list_main.15.7d0f18026H4ZWR
+https://www.aliexpress.com/item/1005004489103885.html?spm=a2g0o.order_list.order_list_main.116.c24d18024PqocZ
 
 The heatsink on the original driver is small and the first electronics I used burned up, so I installed a larger heatsink.
 
-The remote command module is an esp8266 based development board, hosting a web server, so you can controll the skateboard using any smart phone web browser.
+The battery I am using is from a hoverboard as those are the cheapest ones available to me. 
+To get more range, I connected two batteries in paralell.
 
-There is also a remote controller which also uses esp8266 to act as a web sockets client and send command to the server.
+The charge port is for Xiaomi electric scooter, so I am re-using the charger I already have.
 
-The battery I am using is from a hoverboard as those are the cheapest ones available to me. The wheels are 90mm in diameter, so there is sufficient space under the board for the battery box buit from a small lunch box. The rest of the electronics is encased in a 3D printed case.
+# NOTE
+I did build one using my own code for ESP8266 WiFi modules. There was a remote controller and controll circuit for a motor driver
+I bought online. The whole thing worked well, but used a 90mm hub motor wheel. The bicycle tracks in my town are not that great, 
+so I decided to build a new one with two hverboard wheels. The whole electronics is so cheap that it really makes no sence to develop it myself,
+which is why I dropped the development and just used the factory made stuff.
 
-## NOTE
+Downside:
+1. The intensity of the brake system is too hight even when reduced to minimum setting. There is no schematic, so I can not reduce it more.
+2. The LED light port is very small and I could not find a connector for it and no documentation or a module to buy to connect.
+3. The HALL sensors are not very well tuned so I disconnected them entirely. It works well without them. 
 
-The current implementation uses a GPIO pin PWM to command the speed. The voltage is up to 3V3. The driver expects up to 5V, so it does not reach maximum speed. If you want more speed, use the schematic "ESP12_ctrl_high_speed.png" 
-and uncomment in config.h "#define REVERSE_SPEED_POLARITY"  
-
-## Some references:
-
-https://www.losant.com/blog/making-the-esp8266-low-powered-with-deep-sleep
-
-Pins D0 and D6 remain high during bootloader mode.
+# Contact
+ujagaga@gmail.com
