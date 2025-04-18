@@ -1,8 +1,4 @@
-driver/.metadata/
-driver/RemoteSystemsTempFiles/
-driver/firmware/Release/
-controller/.metadata/
-controller/RemoteSystemsTempFiles/
-controller/ctrl_firmware/Release/
 .idea/
 *.FCStd1
+*.FCBak
+.metadata
