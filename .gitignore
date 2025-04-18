@@ -5,3 +5,4 @@ controller/.metadata/
 controller/RemoteSystemsTempFiles/
 controller/ctrl_firmware/Release/
 .idea/
+*.FCStd1

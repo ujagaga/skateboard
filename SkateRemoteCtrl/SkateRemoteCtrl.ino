@@ -1,113 +1,100 @@
 #include "config.h"
 #include "wifi_connection.h"
-#include "ota.h"
 #include "ws_client.h"
 
-#define MAX_KEY_TEST_COUNT            (20u)
-static bool otaModeFlag = false;
+#define THREASHOLD        (100u)
+#define CMD_READ_INTERVAL (200u)
+#define LED_BLINK_COUNT   (9u)
 
-/* Define button type */
-typedef enum{
-  key_none,
-  key_stop,
-  key_accel,
-  key_cruise,
-  key_horn
-}key_id_t;    
+#define POT_LOW           (0)
+#define POT_MID           (1)
+#define POT_HIGH          (2)
 
-static bool keyPressed(key_id_t keyToTest){ 
-  bool test[3] = {0};
-  bool currentTest;
-  bool testDone = false;
-  int testCount = 0;
-  bool testResult = false;
+static volatile uint32_t readTimestamp = 0;
+static uint8_t ledBlinkCounter = 0;
+static int calibrateValue = 500;
+static bool honkPressedFlag = false;
 
-  /* Loop untill we get identical consecutive readings */
-  do{ 
+uint8_t readCmd(){ 
+  int32_t sensorValue = analogRead(PIN_ANALOG);
+
+  if(sensorValue < (calibrateValue - THREASHOLD)){
+    return POT_LOW;
+  }else if(sensorValue > (calibrateValue + THREASHOLD)){
+    return POT_HIGH;
+  }
     
-    switch(keyToTest){
-      case key_stop:
-        currentTest = (digitalRead(PIN_BREAK) == LOW);
-        break;
-      case key_accel:
-        currentTest = (digitalRead(PIN_ACCEL) == LOW);
-        break;
-      case key_cruise:
-        currentTest = (digitalRead(PIN_CRUISE) == LOW);
-        break;
-      case key_horn:
-        currentTest = (digitalRead(PIN_HORN) == LOW);
-        break;
-      default:
-        currentTest = false;       
-    }
-
-    test[0] = test[1]; 
-    test[1] = test[2];
-    test[2] = currentTest;     
-      
-    testCount++;
-    
-    if(testCount < 3){      
-      delay(5);
-    }else{
-      if(testCount > MAX_KEY_TEST_COUNT){
-        testDone = true; 
-        testResult = false;       
-      }else{        
-        if((test[0] == test[1]) && (test[1] == test[2])){
-          testDone = true; 
-          testResult = test[0]; 
-        }else{
-          delay(5);
-        }
-      }
-    }  
-    
-  }while(!testDone);
-
-  return testResult;
+  return POT_MID;   
 }
 
 
 /* Initialization */
 void setup(void) {
-  pinMode(PIN_ACCEL, INPUT_PULLUP);
-  pinMode(PIN_CRUISE, INPUT_PULLUP);
-  pinMode(PIN_BREAK, INPUT_PULLUP);
-  pinMode(PIN_HORN, INPUT_PULLUP);
+  pinMode(PIN_LED, OUTPUT);
+  pinMode(PIN_LED2, OUTPUT);
+  pinMode(PIN_ENABLE, OUTPUT);
+  pinMode(PIN_HONK, INPUT_PULLUP);
 
-  WIFIC_init();
+  digitalWrite(PIN_LED, HIGH); 
+  digitalWrite(PIN_LED2, LOW); 
+  digitalWrite(PIN_ENABLE, HIGH); 
+
+  Serial.begin(115200);
+
+  delay(500);
+
+  calibrateValue = analogRead(PIN_ANALOG);  
   
-  if( keyPressed(key_stop)){
-    otaModeFlag = true;
-    OTA_init();
-    WIFIC_connectToMainNetwork();
-  }else{
-    WIFIC_connectToScate();
-    WS_init();
-  }
+  WIFIC_init();    
+  WIFIC_connectToScate();
+  WS_init();
 }
 
 
 /* Main infinite while loop */
 void loop(void) {
-  if(otaModeFlag){
-    OTA_process();
-  }else{
-    /* Process buttons */
-    if( keyPressed(key_stop)){
-      WS_send(CMD_STOP);     
-    }else if(keyPressed(key_accel)){
-      WS_send(CMD_ACCEL);  
-    }else if( keyPressed(key_cruise)){
-      WS_send(CMD_CRUISE);  
-    }else if( keyPressed(key_horn)){
-      WS_send(CMD_HORN);  
-    }else{
-      WS_send(CMD_NONE); 
-    }  
 
-    WS_process();
+  /* Process honk button (connected to GND, so inverted.) */
+  bool honkBtnPressed = !digitalRead(PIN_HONK);
+  if(honkBtnPressed && !honkPressedFlag){
+    /* Button just pressed */
+    WS_send(CMD_HONK);
   }
+
+  honkPressedFlag = honkBtnPressed;
+    
+  /* Process joystick command */
+  if((millis() - readTimestamp) > CMD_READ_INTERVAL){    
+    uint8_t cmdVal = readCmd();
+  
+    String cmd = CMD_NONE;
+
+    if(cmdVal == POT_HIGH){
+      cmd = CMD_ACCEL + String("100");
+    }else if(cmdVal == POT_LOW){
+      cmd = CMD_STOP;
+    }    
+    
+    WS_send(cmd);       
+    
+    readTimestamp = millis();
+    ledBlinkCounter++;    
+  }
+
+  /* Process LEDs */
+  if(ledBlinkCounter > LED_BLINK_COUNT){
+    ledBlinkCounter = 0;
+  }  
+
+  if(!WS_checkIfConnected() || (ledBlinkCounter == 0)){
+    digitalWrite(PIN_LED, HIGH); 
+    digitalWrite(PIN_LED2, LOW); 
+  }else{
+    digitalWrite(PIN_LED, LOW); 
+    digitalWrite(PIN_LED2, HIGH); 
+  }
+
+  /* Process web socket client */
+  WS_process();
+ 
 }
