@@ -15,12 +15,12 @@ The charge port is for Xiaomi electric scooter, so I am re-using the charger I a
 # NOTE
 I did build one using my own code for ESP8266 WiFi modules. There was a remote controller and controll circuit for a motor driver
 I bought online. The whole thing worked well, but used a 90mm hub motor wheel. The bicycle tracks in my town are not that great, 
-so I decided to build a new one with two hverboard wheels. The whole electronics is so cheap that it really makes no sence to develop it myself,
+so I decided to build a new one with two howerboard wheels. The whole electronics is so cheap that it really makes no sence to develop it myself,
 which is why I dropped the development and just used the factory made stuff.
 
 Downside:
-1. The intensity of the brake system is too hight even when reduced to minimum setting. There is no schematic, so I can not reduce it more.
-2. The LED light port is very small and I could not find a connector for it and no documentation or a module to buy to connect.
+1. The LED light port is very small and I could not find a connector for it and no documentation or a module to buy to connect. 
+Will use the battery indicator wires to trigger the lights.
 3. The HALL sensors are not very well tuned so I disconnected them entirely. It works well without them. 
 
 # Contact
