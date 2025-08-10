@@ -12,6 +12,9 @@ To get more range, I connected two batteries in paralell.
 
 The charge port is for Xiaomi electric scooter, so I am re-using the charger I already have.
 
+# How to
+- The screws I used are standard self curving screws for wood 3x30mm
+
 # NOTE
 I did build one using my own code for ESP8266 WiFi modules. There was a remote controller and controll circuit for a motor driver
 I bought online. The whole thing worked well, but used a 90mm hub motor wheel. The bicycle tracks in my town are not that great, 
