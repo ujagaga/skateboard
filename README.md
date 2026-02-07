@@ -12,8 +12,11 @@ To get more range, I connected two batteries in paralell.
 
 The charge port is for Xiaomi electric scooter, so I am re-using the charger I already have.
 
+The front light is a white LED strip 10mm wide. There is a transparent plastic window covering the LED strip.
+The rear light is made using a red COB LED strip with a silicone covering the LEDs, so no need for an additional plastic to protect it. 
+
 # How to
-- The screws I used are standard self curving screws for wood 3x30mm
+- The screws I used are standard self curving screws for wood 3x30mm and 3x25mm.
 
 # NOTE
 I did build one using my own code for ESP8266 WiFi modules. There was a remote controller and controll circuit for a motor driver
